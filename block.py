@@ -5,12 +5,40 @@ import pygame
 
 import config
 
+
 def init_block_images():
-    from items import CopperOreDeposit, IronOreDeposit, CoalDeposit
+    from items import (
+        Grass,
+        CopperOreDeposit,
+        IronOreDeposit,
+        CoalDeposit,
+        StoneDeposit,
+        Tree,
+        Coal,
+        Dirt,
+        Furnace,
+        ScienceStation,
+        Printer,
+        WoodenWall,
+        IronWall,
+        CopperWall,
+        StoneWall
+    )
     Grass.load_images()
     CopperOreDeposit.load_images()
     IronOreDeposit.load_images()
     CoalDeposit.load_images()
+    StoneDeposit.load_images()
+    Tree.load_images()
+    Coal.load_images()
+    Dirt.load_images()
+    Furnace.load_images()
+    ScienceStation.load_images()
+    Printer.load_images()
+    WoodenWall.load_images()
+    IronWall.load_images()
+    CopperWall.load_images()
+    StoneWall.load_images()
 
 class Block(DirtySprite):
 
@@ -39,22 +67,4 @@ class Block(DirtySprite):
 
             return surf.blit(self.image, (self.rect.x, self.rect.y))
 
-
-
-
-################
-# Block Types
-################
-
-# Map Layer Blocks
-
-class Grass(Block):
-
-    @classmethod
-    def load_images(cls):
-        cls.image = pygame.image.load("assets/grass.png")
-        cls.image = pygame.transform.scale(cls.image, config.image_size)
-
-    def __init__(self, x, y):
-        Block.__init__(self, x, y, Grass.image)
 

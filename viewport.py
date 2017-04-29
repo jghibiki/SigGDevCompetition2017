@@ -95,14 +95,13 @@ class Viewport():
                 self.dirty = 0
 
             diff_rects = []
-            self.item_layer_surf.fill(pygame.Color(0, 0, 0, 1))
             for y in range(0, config.world_size[0]):
                 for x in range(0, config.world_size[1]):
                     map_diff = self.map_layer[y][x].draw(self.map_layer_surf)
 
                     item_diff = None
                     if self.item_layer[y][x] != None:
-                        item_diff = self.item_layer[y][x].draw(self.item_layer_surf, force=True)
+                        item_diff = self.item_layer[y][x].draw(self.item_layer_surf)
 
                     diff_rects.extend([ map_diff, item_diff ])
 

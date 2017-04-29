@@ -23,6 +23,16 @@ pygame.display.set_caption("Some Mining Game");
 
 pygame.font.init()
 
+title_font = pygame.font.Font("assets/bitwise/bitwise.ttf", 50)
+title = title_font.render("Some Cyberpunk Mining Game", True, pygame.Color("#FFFFFF"))
+
+loading_font = pygame.font.Font("assets/bitwise/bitwise.ttf", 25)
+loading = title_font.render("Loading...", True, pygame.Color("#FFFFFF"))
+
+window_surf.blit(title, (200, 100))
+window_surf.blit(loading, (450, 300))
+pygame.display.update()
+
 init_block_images()
 
 vp = Viewport(
@@ -48,6 +58,37 @@ for y in range(0, config.world_size[1]):
 
 # generate item layer
 generate_items_layer(vp)
+
+# do initial render while we are still on loading screen
+vp.render()
+
+#TODO: INSERT STORY HERE
+
+loading_font = pygame.font.Font("assets/bitwise/bitwise.ttf", 25)
+loading = title_font.render("Press the Spacebar to continue...", True, pygame.Color("#FFFFFF"))
+window_surf.fill(pygame.Color("#000000"))
+window_surf.blit(loading, (250, 300))
+pygame.display.update()
+
+cont = False
+while not cont:
+    clock.tick(120)
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+        elif event.type == KEYDOWN:
+            if event.key == K_ESCAPE:
+                pygame.quit()
+                sys.exit()
+            elif event.key == K_SPACE:
+                cont = True
+
+
+# render once quick before first loop
+window_surf.fill(pygame.Color("#000000"))
+rects = vp.draw(window_surf)
+pygame.display.update(rects)
 
 
 counter = 0
