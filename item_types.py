@@ -44,16 +44,18 @@ class Item(Block):
         self.dirty = 1
         self.viewport.dirty = 1
 
+    def clear(self):
+        self.viewport.item_layer_surf.fill(pygame.Color(0, 0, 0, 1), rect=(
+            self.x * config.image_size[0],
+            self.y * config.image_size[1],
+            config.image_size[0], config.image_size[1] ))
 
     def draw(self, surf, force=False):
         if self.dirty == 1 or self.dirty == 2 or force:
             if self.dirty == 1:
                 self.dirty = 0
 
-            surf.fill(pygame.Color(0, 0, 0, 1), rect=(
-                self.x * config.image_size[0],
-                self.y * config.image_size[1],
-                config.image_size[0], config.image_size[1] ))
+            self.clear()
 
             if self.collided and not self.selected:
                 b = config.selection_border
@@ -88,21 +90,50 @@ class Item(Block):
             else:
                 return surf.blit(self.image, (self.rect.x, self.rect.y))
 
+class HoldableItem(Item):
+    def __init__(self, x, y, image, viewport):
+        Item.__init__(self, x, y, image, viewport)
 
-class OreDeposit():
-    def __init__(self, quantity):
+
+class HoldableItemSource():
+    def __init__(self, quantity, item_factory, collection_rate=1):
         self.quantity = quantity
+        self.item_factory = item_factory
+        self.exhausted = False
+        self.collection_rate = collection_rate
 
-    def collect(self):
+    def collect(self, max_collection=None):
         #TODO find some sort of scailing collection rate
-        self.quantity -= 10
-        return 10
+        if not self.exhausted:
+            if max_collection:
+                collect = min(max_collection, self.collection_rate)
+            else:
+                collect = self.collection_rate
+
+            if self.quantity - collect >= 0:
+                self.quantity -= collect
+                if self.quantity == 0:
+
+                    #remove self from item layer
+                    self.clear()
+                    self.viewport.item_layer[self.y][self.x] = None
+                    self.dirty = 1
+                    self.viewport.dirty = 1
+
+                return [ self.item_factory(0, 0, self.viewport) for _ in range(0, collect) ]
+            #TODO there is a missing case here figure it out
+
+            else:
+                return None
+        return None
 
     def remaining_ore(self):
         return self.quantity
 
 
 
-class Collidable(Block):
-    def __init__(self, x, y, image):
-        Block.__init__(self, x, y, image)
+class Container():
+    pass
+
+class Collidable():
+    pass

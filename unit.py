@@ -5,6 +5,7 @@ import pygame
 
 import config
 from block import Block
+from item_types import *
 
 class Unit(Block):
     @classmethod
@@ -28,6 +29,8 @@ class Unit(Block):
         self.old_x = x
         self.old_y = y
 
+        self.inventory = []
+
         self.id = str(uuid4())
 
         image = random.choice(Unit.images)
@@ -39,12 +42,18 @@ class Unit(Block):
         if self.task:
             distance_to_task = self.task.distance_to_target((self.x, self.y))
             if distance_to_task[0] == 1 and distance_to_task[1] == 1:
-                print(self.id, "Doing task")
+                result = self.task.do()
+                if result:
+                    self.inventory = self.inventory + result
+                if self.task.done:
+                    self.task = None
             else:
                 self.old_x = self.x
                 self.old_y = self.y
 
                 stuck = True
+                # TODO: Track the location where we were stuck at as well as which unstuck options we have tried,
+                #       don't retry an option. reset stuck state if we move more than 2 squares away from stuck location
 
                 if distance_to_task[0] > 1:
                     if self.check_collision(self.x+1, self.y):
@@ -139,7 +148,8 @@ class Unit(Block):
         if x >= config.world_size[0] or y >= config.world_size[1]:
             return False
 
-        if self.viewport.item_layer[y][x] != None:
+        item = self.viewport.item_layer[y][x]
+        if item != None and isinstance(item, Collidable):
             return False
 
         for unit in self.dispatcher.units:

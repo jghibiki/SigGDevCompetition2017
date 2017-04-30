@@ -63,12 +63,12 @@ for y in range(0, config.world_size[1]):
 generate_items_layer(vp)
 
 #generate units
-dispatcher = Dispatcher()
-dispatcher.tasks.append( Task( GenericTarget( 20, 20) ) )
-dispatcher.tasks.append( Task( GenericTarget( 0, 20) ) )
-dispatcher.tasks.append( Task( GenericTarget( 20, 0) ) )
-dispatcher.tasks.append( Task( GenericTarget( 15, 7) ) )
-dispatcher.tasks.append( Task( GenericTarget( 50, 50) ) )
+dispatcher = Dispatcher(vp)
+#dispatcher.tasks.append( Task( GenericTarget( 20, 20) ) )
+#dispatcher.tasks.append( Task( GenericTarget( 0, 20) ) )
+#dispatcher.tasks.append( Task( GenericTarget( 20, 0) ) )
+#dispatcher.tasks.append( Task( GenericTarget( 15, 7) ) )
+#dispatcher.tasks.append( Task( GenericTarget( 50, 50) ) )
 Unit.load_images()
 num_units = 5
 
