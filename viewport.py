@@ -23,10 +23,11 @@ class Viewport():
         self.item_layer_surf= pygame.Surface((self.map_rect.w, self.map_rect.h), flags=pygame.SRCALPHA)
 
         self.unit_layer = []
-        self.unit_layer_surf= pygame.Surface((self.map_rect.w, self.map_rect.h))
+        self.unit_layer_surf= pygame.Surface((self.map_rect.w, self.map_rect.h), flags=pygame.SRCALPHA)
 
         self.hud_surf = pygame.Surface((self.hud_rect.w, self.hud_rect.h))
         self.hud_surf.fill(pygame.Color("#737373"))
+        self.hud_font = pygame.font.Font("assets/bitwise/bitwise.ttf", 25)
 
 
         self.dirty = 1
@@ -105,6 +106,19 @@ class Viewport():
 
                     diff_rects.extend([ map_diff, item_diff ])
 
+            for unit in self.unit_layer:
+                unit.draw(self.unit_layer_surf)
+
+            self.render_hud()
+
+    def render_hud(self):
+        unit_count = self.hud_font.render("Units: {0}".format(len(self.unit_layer)), True, pygame.Color("#00AD03"))
+
+        # clear hud
+        self.hud_surf.fill(pygame.Color("#000000"))
+
+        self.hud_surf.blit(unit_count, (10, 10))
+
 
 
     def draw(self, surf):
@@ -115,6 +129,9 @@ class Viewport():
 
         # item layer
         rects.append( surf.blit(self.item_layer_surf, (0, 0),  area=self.v_rect) )
+
+        # unit layer
+        rects.append( surf.blit(self.unit_layer_surf, (0, 0),  area=self.v_rect) )
 
         # draw hud layer
         rects.append( surf.blit(self.hud_surf, (self.hud_rect.x, self.hud_rect.y)) )

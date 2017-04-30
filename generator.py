@@ -23,7 +23,7 @@ def generate_items_layer(vp):
                     generate_trees(vp, x, y, s)
 
 def generate_iron_deposits(vp, x, y, s):
-    prob = 0.0005
+    prob = 0.00025
     solo = True
 
     # above
@@ -74,7 +74,7 @@ def generate_iron_deposits(vp, x, y, s):
 
 
 def generate_copper_deposits(vp, x, y, s):
-    prob = 0.0005
+    prob = 0.00025
     solo = True
 
     # above
@@ -125,7 +125,7 @@ def generate_copper_deposits(vp, x, y, s):
 
 
 def generate_coal_deposits(vp, x, y, s):
-    prob = 0.0005
+    prob = 0.00025
     solo = True
 
     # above
@@ -175,7 +175,7 @@ def generate_coal_deposits(vp, x, y, s):
         vp.item_layer[y][x] = CoalDeposit(x, y, vp, random.randint(50, 150))
 
 def generate_stone_deposits(vp, x, y, s):
-    prob = 0.0005
+    prob = 0.00025
     solo = True
 
     # above

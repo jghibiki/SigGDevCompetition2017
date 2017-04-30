@@ -121,6 +121,14 @@ class Printer(Item):
     def __init__(self, x, y, viewport):
         Item.__init__(self, x, y, Printer.image, viewport)
 
+class IndoctrinationChamber(Item):
+    @classmethod
+    def load_images(cls):
+        cls.image = pygame.image.load("assets/indoctrination_chamber.png")
+        cls.image = pygame.transform.scale(cls.image, config.image_size)
+
+    def __init__(self, x, y, viewport):
+        Item.__init__(self, x, y, IndoctrinationChamber.image, viewport)
 
 
 class WoodenWall(Item):
@@ -159,3 +167,6 @@ class StoneWall(Item):
 
     def __init__(self, x, y, viewport):
         Item.__init__(self, x, y, StoneWall.image, viewport)
+
+
+

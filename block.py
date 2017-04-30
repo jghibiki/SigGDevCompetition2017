@@ -19,6 +19,7 @@ def init_block_images():
         Furnace,
         ScienceStation,
         Printer,
+        IndoctrinationChamber,
         WoodenWall,
         IronWall,
         CopperWall,
@@ -32,9 +33,12 @@ def init_block_images():
     Tree.load_images()
     Coal.load_images()
     Dirt.load_images()
+
     Furnace.load_images()
     ScienceStation.load_images()
     Printer.load_images()
+    IndoctrinationChamber.load_images()
+
     WoodenWall.load_images()
     IronWall.load_images()
     CopperWall.load_images()
