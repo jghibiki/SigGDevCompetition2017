@@ -28,7 +28,9 @@ def init_block_images():
         Stone,
         Coal,
         Iron,
-        Copper
+        Copper,
+        Stockpile,
+        ReanimationChamber
     )
     Grass.load_images()
     CopperOreDeposit.load_images()
@@ -43,6 +45,7 @@ def init_block_images():
     ScienceStation.load_images()
     Printer.load_images()
     IndoctrinationChamber.load_images()
+    ReanimationChamber.load_images()
 
     WoodenWall.load_images()
     IronWall.load_images()
@@ -55,10 +58,14 @@ def init_block_images():
     Iron.load_images()
     Copper.load_images()
 
+    Stockpile.load_images()
+
 class Block(DirtySprite):
 
-    def __init__(self, x, y, image):
+    def __init__(self, x, y, image, viewport):
         DirtySprite.__init__(self)
+
+        self.viewport = viewport
 
         self.x = x
         self.y = y
@@ -83,3 +90,17 @@ class Block(DirtySprite):
             return surf.blit(self.image, (self.rect.x, self.rect.y))
 
 
+    def mouse_collide(self, pos=None):
+        rect = self.image.get_rect()
+        rect = pygame.Rect(
+                self.x * config.image_size[0],
+                self.y * config.image_size[1],
+                config.image_size[0], config.image_size[1])
+
+        if not pos:
+            pos = pygame.mouse.get_pos()
+
+        corrected_pos = ( pos[0] + self.viewport.v_rect.x, pos[1] + self.viewport.v_rect.y )
+        collided = rect.collidepoint(corrected_pos)
+
+        return collided

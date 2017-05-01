@@ -1,3 +1,4 @@
+import json
 
 import pygame, sys, random, math
 import pygame.gfxdraw
@@ -11,6 +12,7 @@ from unit import Unit
 from dispatch import Dispatcher, Task, GenericTarget
 from generator import *
 from utils import wrapline
+from enterprise import Enterprise
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -50,7 +52,7 @@ vp = Viewport(
 for y in range(0, config.world_size[1]):
     col = []
     for x in range(0, config.world_size[0]):
-        col.append( Grass(x, y) )
+        col.append( Grass(x, y, vp) )
     vp.map_layer.append(col)
 
 for y in range(0, config.world_size[1]):
@@ -64,6 +66,7 @@ generate_items_layer(vp)
 
 #generate units
 dispatcher = Dispatcher(vp)
+vp.hud.dispatcher = dispatcher
 #dispatcher.tasks.append( Task( GenericTarget( 20, 20) ) )
 #dispatcher.tasks.append( Task( GenericTarget( 0, 20) ) )
 #dispatcher.tasks.append( Task( GenericTarget( 20, 0) ) )
@@ -92,7 +95,11 @@ vp.render()
 
 #TODO: INSERT STORY HERE
 
-story = "Welcome back to life.\n You died.\n Because of your outstanding debits, your body was claimed by DigiCorp Industries. In order to pay back your debit, You have been reanimated to serve as a laborer in our company. You will be unique among your co-workers. You have been allowed access to higher order brain functions in order to serve as a manager. It is your duty to build enough product to pay back your debit by commanding your assigned underlings. Once your debit is paid - including the costs of reanimation, you will be released. If you fail to complete your task our scientists will wipe your memory and your body will be repurposed as a manual laborer. Do not fail if you desire your freedom."
+with open("names.json") as f:
+    names = json.load(f)
+    company_name = random.choice(names["company_names"])
+
+story = "Welcome back to life.\n You died.\nYour body was claimed by the company {0} as collateral for your outstanding debits. In order to pay back your debit, you have been reanimated to serve as a laborer in our company. You will be unique among your co-workers. You have been allowed access to higher order brain functions in order to serve as a manager. It is your duty to build enough product to pay back your debit by commanding your assigned underlings. Once your debit is paid - including the costs of reanimation, you will be released. If you fail to complete your task our scientists will wipe your memory and your body will be repurposed as a manual laborer. Do not fail if you desire your freedom.".format(company_name)
 
 
 story_font = pygame.font.Font("assets/bitwise/bitwise.ttf", 25)
@@ -134,6 +141,11 @@ rects = vp.draw(window_surf)
 pygame.display.update(rects)
 
 
+enterprise = Enterprise()
+vp.hud.enterprise = enterprise
+vp.dirty = 1
+vp.render()
+
 counter = 0
 
 while True:
@@ -149,10 +161,16 @@ while True:
         elif event.type == MOUSEBUTTONUP:
             vp.mouse_events.append(event)
 
+    dispatcher.handle_keyboard_events()
     vp.handle_keyboard_events()
     vp.handle_mouse_events()
 
-    if counter % 100 == 0:
+    enterprise.update()
+
+    if enterprise.failed:
+        break
+
+    if counter % 10 == 0:
         dispatcher.update()
 
     if counter == 1000:
@@ -167,3 +185,26 @@ while True:
     clock.tick(120)
 
 
+enterprise.update()
+
+if enterprise.failed:
+    window_surf.fill(pygame.Color("#000000"))
+    rendered_text = title_font.render("You have failed.", True, pygame.Color("#00AD03"))
+    window_surf.blit(rendered_text, (450, 300))
+    pygame.display.update(rects)
+
+    cont = False
+    while not cont:
+        clock.tick(120)
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+                elif event.key == K_SPACE:
+                    cont = True
+
+        clock.tick(120)

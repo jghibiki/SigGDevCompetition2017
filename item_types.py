@@ -6,9 +6,10 @@ from block import Block
 
 class Item(Block):
 
-    def __init__(self, x, y, image, viewport):
-        Block.__init__(self, x, y, image)
-        self.viewport = viewport
+    def __init__(self, x, y, image, viewport, targetable=True):
+        Block.__init__(self, x, y, image, viewport)
+
+        self.targetable = targetable
 
         self.collided = False
 
@@ -19,7 +20,8 @@ class Item(Block):
         rect = pygame.Rect(
                 self.x * config.image_size[0],
                 self.y * config.image_size[1],
-                rect.w, rect.h)
+                config.image_size[0],
+                config.image_size[1])
 
         if not pos:
             pos = pygame.mouse.get_pos()
@@ -31,7 +33,7 @@ class Item(Block):
         previously_collided = self.collided
         self.collided = collided
 
-        if side_effect:
+        if self.targetable and side_effect:
             if ( (not previously_collided and collided) or
                  (previously_collided and not collided) ):
                 self.dirty = 1
@@ -40,9 +42,10 @@ class Item(Block):
         return collided
 
     def toggle_selected(self):
-        self.selected = not self.selected
-        self.dirty = 1
-        self.viewport.dirty = 1
+        if self.targetable:
+            self.selected = not self.selected
+            self.dirty = 1
+            self.viewport.dirty = 1
 
     def clear(self):
         self.viewport.item_layer_surf.fill(pygame.Color(0, 0, 0, 1), rect=(
@@ -91,8 +94,22 @@ class Item(Block):
                 return surf.blit(self.image, (self.rect.x, self.rect.y))
 
 class HoldableItem(Item):
-    def __init__(self, x, y, image, viewport):
-        Item.__init__(self, x, y, image, viewport)
+    def __init__(self, name, x, y, image, viewport):
+        Item.__init__(self, x, y, image, viewport, targetable=False)
+        self.name = name
+
+    def set_location(self, x, y):
+        self.x = x
+        self.y = y
+
+        self.rect = self.image.get_rect().move(
+                x * config.image_size[0],
+                y * config.image_size[1])
+
+
+    def __str__(self):
+        return self.name
+
 
 
 class HoldableItemSource():
@@ -127,13 +144,43 @@ class HoldableItemSource():
                 return None
         return None
 
-    def remaining_ore(self):
+    def remaining(self):
         return self.quantity
 
 
 
-class Container():
-    pass
+class Container(Item):
+
+    def __init__(self, capacity, x, y, image, viewport):
+        Item.__init__(self, x, y, image, viewport, targetable=False)
+
+        self.capacity = capacity
+        self.items = []
+
+
+    def can_store(self):
+        return len(self.items) < self.capacity
+
+    def store(self, item):
+        self.items.append(item)
+
+    def check_for_item(self, type_of_item):
+        for item in self.items:
+            if isinstance(item, type_of_item):
+                return True
+        return False
+
+    def retrive(self, type_of_item):
+        output = []
+        for item in self.items:
+            if isinstance(item, type_of_item):
+                output.append( item )
+                self.items.remove(item)
+        return output
+
+
 
 class Collidable():
     pass
+
+
