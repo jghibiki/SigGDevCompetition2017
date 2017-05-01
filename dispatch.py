@@ -38,8 +38,7 @@ class Dispatcher:
                 break
 
         if keys[K_f]:
-
-            # adds a new stockpile
+            # adds a new furnace
             for y in range(0, config.world_size[0]):
                 for x in range(0, config.world_size[0]):
                     if self.viewport.map_layer[y][x].mouse_collide() and self.viewport.item_layer[y][x] == None:
@@ -49,7 +48,59 @@ class Dispatcher:
                         self.viewport.dirty = 1
                         break
 
+        if keys[K_i]:
+            # adds a new indoctrination chamber
+            for y in range(0, config.world_size[0]):
+                for x in range(0, config.world_size[0]):
+                    if self.viewport.map_layer[y][x].mouse_collide() and self.viewport.item_layer[y][x] == None:
+                        bm = BuildingMarker(x, y, self.viewport, IndoctrinationChamber, [ [Copper, 100], [Iron, 100]])
+                        self.tasks.append( BuildBuildingTask( bm, self ) )
+                        self.viewport.item_layer[y][x] = bm
+                        self.viewport.dirty = 1
+                        break
+        if keys[K_r]:
+            # adds a new reanimation chamber
+            for y in range(0, config.world_size[0]):
+                for x in range(0, config.world_size[0]):
+                    if self.viewport.map_layer[y][x].mouse_collide() and self.viewport.item_layer[y][x] == None:
+                        bm = BuildingMarker(x, y, self.viewport, ReanimationChamber, [ [Copper, 200], [Iron, 200] ])
+                        self.tasks.append( BuildBuildingTask( bm, self ) )
+                        self.viewport.item_layer[y][x] = bm
+                        self.viewport.dirty = 1
+                        break
 
+        if keys[K_t]:
+            # adds a new science station
+            for y in range(0, config.world_size[0]):
+                for x in range(0, config.world_size[0]):
+                    if self.viewport.map_layer[y][x].mouse_collide() and self.viewport.item_layer[y][x] == None:
+                        bm = BuildingMarker(x, y, self.viewport, ScienceStation, [ [Iron, 100], [Copper, 300] ])
+                        self.tasks.append( BuildBuildingTask( bm, self ) )
+                        self.viewport.item_layer[y][x] = bm
+                        self.viewport.dirty = 1
+                        break
+
+        if keys[K_p]:
+            # adds a new science station
+            for y in range(0, config.world_size[0]):
+                for x in range(0, config.world_size[0]):
+                    if self.viewport.map_layer[y][x].mouse_collide() and self.viewport.item_layer[y][x] == None:
+                        bm = BuildingMarker(x, y, self.viewport, Printer, [ [Iron, 500], [Copper, 500] ])
+                        self.tasks.append( BuildBuildingTask( bm, self ) )
+                        self.viewport.item_layer[y][x] = bm
+                        self.viewport.dirty = 1
+                        break
+
+        if keys[K_d]:
+            # adds a new science station
+            for y in range(0, config.world_size[0]):
+                for x in range(0, config.world_size[0]):
+                    if self.viewport.map_layer[y][x].mouse_collide() and self.viewport.item_layer[y][x] == None:
+                        bm = BuildingMarker(x, y, self.viewport, DeliveryBot, [ [Copper, 50], [Iron, 50] ])
+                        self.tasks.append( BuildBuildingTask( bm, self ) )
+                        self.viewport.item_layer[y][x] = bm
+                        self.viewport.dirty = 1
+                        break
 
     def update(self):
         selected_items = []
@@ -176,7 +227,6 @@ class BuildBuildingTask(Task):
             self.end_task()
 
         return req
-
 
 
 

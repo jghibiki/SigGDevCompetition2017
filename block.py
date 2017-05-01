@@ -31,7 +31,8 @@ def init_block_images():
         Copper,
         Stockpile,
         ReanimationChamber,
-        BuildingMarker
+        BuildingMarker,
+        DeliveryBot
     )
     Grass.load_images()
     CopperOreDeposit.load_images()
@@ -47,6 +48,7 @@ def init_block_images():
     Printer.load_images()
     IndoctrinationChamber.load_images()
     ReanimationChamber.load_images()
+    DeliveryBot.load_images()
 
     WoodenWall.load_images()
     IronWall.load_images()

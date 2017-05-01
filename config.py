@@ -1,6 +1,6 @@
 
-display_scale=0.75
-
+#display_scale=0.75
+display_scale=1.0
 
 world_size = (100, 100)
 
@@ -26,6 +26,6 @@ monthly_quota_scale = 1.2
 monthly_quota_max = 5000.0
 
 #month_time_length = (0, 15) # minutes, seconds
-month_time_length = (5, 0) # minutes, seconds
+month_time_length = (10, 0) # minutes, seconds
 
 

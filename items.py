@@ -212,7 +212,7 @@ class ScienceStation(Buildable):
 class Printer(Buildable):
     @classmethod
     def load_images(cls):
-        cls.image = pygame.image.load("assets/science_station.png")
+        cls.image = pygame.image.load("assets/printer.png")
         cls.image = pygame.transform.scale(cls.image, config.image_size)
 
     def __init__(self, x, y, viewport):
@@ -227,6 +227,14 @@ class IndoctrinationChamber(Buildable):
     def __init__(self, x, y, viewport):
         Item.__init__(self, x, y, IndoctrinationChamber.image, viewport)
 
+class DeliveryBot(Buildable):
+    @classmethod
+    def load_images(cls):
+        cls.image = pygame.image.load("assets/delivery_bot.png")
+        cls.image = pygame.transform.scale(cls.image, config.image_size)
+
+    def __init__(self, x, y, viewport):
+        Item.__init__(self, x, y, DeliveryBot.image, viewport)
 
 class BuildingMarker(Item, Collidable, BuildingPlaceholder):
     @classmethod
