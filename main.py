@@ -28,14 +28,17 @@ pygame.display.set_caption("Some Mining Game");
 
 pygame.font.init()
 
-title_font = pygame.font.Font("assets/bitwise/bitwise.ttf", 50)
+title_font = pygame.font.Font("assets/bitwise/bitwise.ttf", 70)
 title = title_font.render("Some Cyberpunk Mining Game", True, pygame.Color("#00AD03"))
+window_surf.blit(title, (
+    math.floor( config.window_size[0]/2) - math.floor(title.get_rect().w/2), 100))
 
 loading_font = pygame.font.Font("assets/bitwise/bitwise.ttf", 25)
 loading = title_font.render("Loading...", True, pygame.Color("#00AD03"))
+window_surf.blit(loading, (
+    math.floor( config.window_size[0]/2) - math.floor(loading.get_rect().w/2),
+    math.floor(config.window_size[1]*0.75) ))
 
-window_surf.blit(title, (200, 100))
-window_surf.blit(loading, (450, 300))
 pygame.display.update()
 
 init_block_images()
@@ -117,7 +120,9 @@ for split in story.split("\n"):
 
 loading = title_font.render("Press the Spacebar to continue...", True, pygame.Color("#00AD03"))
 
-window_surf.blit(loading, (250, math.floor(config.window_size[1]*0.75)))
+window_surf.blit(loading, (
+    math.floor( config.window_size[0]/2) - math.floor(loading.get_rect().w/2),
+    math.floor(config.window_size[1]*0.75)))
 pygame.display.update()
 
 cont = False

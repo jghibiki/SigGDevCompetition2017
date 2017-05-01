@@ -45,7 +45,7 @@ class Grass(Block):
 
     @classmethod
     def load_images(cls):
-        cls.image = pygame.image.load("assets/grass.png")
+        cls.image = pygame.image.load("assets/sci_fi_grass.png")
         cls.image = pygame.transform.scale(cls.image, config.image_size)
 
     def __init__(self, x, y, viewport):
