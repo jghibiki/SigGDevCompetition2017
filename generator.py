@@ -175,7 +175,7 @@ def generate_coal_deposits(vp, x, y, s):
         vp.item_layer[y][x] = CoalDeposit(x, y, vp, random.randint(50, 150))
 
 def generate_stone_deposits(vp, x, y, s):
-    prob = 0.00025
+    prob = 0.00225
     solo = True
 
     # above

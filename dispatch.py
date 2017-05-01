@@ -27,7 +27,6 @@ class Dispatcher:
             # adds a new stockpile
             for y in range(0, config.world_size[0]):
                 for x in range(0, config.world_size[0]):
-
                     if self.viewport.map_layer[y][x].mouse_collide() and self.viewport.item_layer[y][x] == None:
                         sp = Stockpile(x, y, self.viewport)
                         self.stock_piles.append( sp )
@@ -38,6 +37,17 @@ class Dispatcher:
                     continue
                 break
 
+        if keys[K_f]:
+
+            # adds a new stockpile
+            for y in range(0, config.world_size[0]):
+                for x in range(0, config.world_size[0]):
+                    if self.viewport.map_layer[y][x].mouse_collide() and self.viewport.item_layer[y][x] == None:
+                        bm = BuildingMarker(x, y, self.viewport, Furnace, [ [Stone, 100], [Wood, 200] ])
+                        self.tasks.append( BuildBuildingTask( bm, self ) )
+                        self.viewport.item_layer[y][x] = bm
+                        self.viewport.dirty = 1
+                        break
 
 
 
@@ -68,8 +78,9 @@ class Dispatcher:
         for unit in self.units:
             if not unit.task:
                 if len(self.tasks) > 0:
-                    mapping = [ [task.distance_to_task(unit.x, unit.y), task] for task in self.tasks ]
-                    closest = min(mapping = lambda x: abs(x[0][0]) + abs(x[0][1]))[1]
+                    print("assigning task")
+                    mapping = [ [task.distance_to_target((unit.x, unit.y)), task] for task in self.tasks ]
+                    closest = min(mapping, key=lambda x: abs(x[0][0]) + abs(x[0][1]))[1]
                     self.tasks.remove(closest)
                     unit.task = closest
                     self.assigned_tasks.append(unit.task)
@@ -89,12 +100,14 @@ class Dispatcher:
 
             elif unit.task:
                 if isinstance(unit.task.target, Item):
-                    if not unit.task.target.selected:  # if the item has been unselected, abandon the task
+                    if not unit.task.target.selected and unit.task.target.targetable:
+                        # if the item has been unselected, abandon the task don't abandon if the task can't be targeted
                         unit.task.canceled()
                         unit.task = None
                     else:
                         unit.update()
                 else:
+                    print("work on task")
                     unit.update()
 
 
@@ -114,22 +127,6 @@ class Task:
     def do(self):
         pass
 
-    def abort(self):
-        pass
-
-
-class GatherItemTask(Task):
-    def __init__(self, target, dispatcher):
-        Task.__init__(self, target, dispatcher)
-
-    def do(self):
-        # TODO: allow collection rate to scale
-        collected = self.target.collect()
-        if not collected:
-            self.done = True
-            self.end_task()
-        return collected
-
     def abort(self, reason=None):
         self.aborted = True
         self.end_task()
@@ -145,8 +142,45 @@ class GatherItemTask(Task):
             self.dispatcher.assigned_tasks.remove(self)
         self.target.dirty = 1
         self.target.viewport.dirty = 1
+
+
+class GatherItemTask(Task):
+    def __init__(self, target, dispatcher):
+        Task.__init__(self, target, dispatcher)
+
+    def do(self):
+        # TODO: allow collection rate to scale
+        collected = self.target.collect()
+        if not collected:
+            self.done = True
+            self.end_task()
+        return collected
+
+    def end_task(self):
+        Task.end_task(self)
         if isinstance(self.target, Item):
             self.target.selected = False
+
+
+class BuildBuildingTask(Task):
+    def __init__(self, target, dispatcher):
+        Task.__init__(self, target, dispatcher)
+
+    def do(self, material=None):
+        if material:
+            self.target.build(material)
+
+        req = self.target.get_required()
+        if len(req) == 0:
+            self.done = True
+            self.end_task()
+
+        return req
+
+
+
+
+
 
 class GenericTarget:
     def __init__(self, x, y):

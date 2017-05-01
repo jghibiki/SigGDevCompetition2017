@@ -8,6 +8,7 @@ import pygame
 import config
 from block import Block
 from item_types import *
+from dispatch import *
 
 class Unit(Block):
     @classmethod
@@ -58,6 +59,8 @@ class Unit(Block):
 
         self.task = None
         self.work_target = None
+        self.collection_target = None
+        self.return_from_collection = False
 
         self.dirty = 2
 
@@ -81,14 +84,53 @@ class Unit(Block):
 
             # if the task is done clear it out so we can be elidgable for another
             if self.task is not None and self.task.done:
-                print("task finished")
                 self.task = None
                 self.dirty = 1
                 self.viewport.dirty = 1 # refresh screen to remove line
                 return
 
-            if len(self.inventory) >= self.inventory_size:
-                # inventory is full, we need to drop stuff off at a stockpile
+            if self.collection_target is not None:
+                mapping = []
+                for stock_pile in self.dispatcher.stock_piles:
+                    random.shuffle(self.collection_target)
+                    if stock_pile.check_for_item(self.collection_target[0][0]):
+                        mapping.append( [ abs(stock_pile.x - self.x) + abs(stock_pile.y - self.y), stock_pile ] )
+
+                if len(mapping) > 0:
+                    print("closest stock pile")
+                    closest = min(mapping, key=lambda x: x[0])[1]
+                    distance_to = (closest.x - self.x, closest.y - self.y)
+                    if (abs(distance_to[0]) == 1 and abs(distance_to[1]) == 0 or
+                        abs(distance_to[0]) == 0 and abs(distance_to[1]) == 1 or
+                        abs(distance_to[0]) == 1 and abs(distance_to[1]) == 1 or
+                        abs(distance_to[0]) == 0 and abs(distance_to[1]) == 0):
+
+                        print("collecting...")
+
+                        valid_item = True
+                        while len(self.inventory) < self.inventory_size and valid_item:
+                            item = closest.retrieve( self.collection_target[0][0] )
+                            if item != None:
+                                print("got item", item)
+                                self.inventory.append(item)
+                            else:
+                                print("invalid item")
+                                valid_item = False
+
+                        self.collection_target = None
+
+                    else:
+                        # try to path to stock pile
+                        print("pathing to")
+                        self.old_x = self.x
+                        self.old_y = self.y
+                        self.path_to(distance_to)
+
+
+
+            elif len(self.inventory) >= self.inventory_size and not isinstance(self.task, BuildBuildingTask):
+                # inventory is full, we need to drop stuff off at a stockpile, but don't if we have a task
+                # as we may be getting stuff
 
                 if self.stock_pile is None: # we have no selected stock pile fint closest one
                     mapping = [ [ abs(stock_pile.x - self.x) + abs(stock_pile.y - self.y), stock_pile ] for stock_pile in self.dispatcher.stock_piles if stock_pile.can_store() ]
@@ -132,8 +174,10 @@ class Unit(Block):
                         distance_to = (self.stock_pile.x - self.x, self.stock_pile.y - self.y)
                         if (abs(distance_to[0]) == 1 and abs(distance_to[1]) == 0 or
                             abs(distance_to[0]) == 0 and abs(distance_to[1]) == 1 or
-                            abs(distance_to[0]) == 1 and abs(distance_to[1]) == 1):
+                            abs(distance_to[0]) == 1 and abs(distance_to[1]) == 1 or
+                            abs(distance_to[0]) == 0 and abs(distance_to[1]) == 0):
 
+                            print("dumping inventory")
                             while self.stock_pile.can_store() and len(self.inventory) > 0:
 
                                 item = self.inventory.pop()
@@ -149,7 +193,9 @@ class Unit(Block):
 
             elif self.task:
 
-                if isinstance(self.task.target, Item) and not self.task.target.selected:
+                if (isinstance(self.task.target, Item)
+                        and self.task.target.targetable # don't cancel if not targetable
+                        and not self.task.target.selected):
                     self.task.canceled()
                     self.task = None
                     return
@@ -165,7 +211,8 @@ class Unit(Block):
                 distance_to_task = self.task.distance_to_target((self.x, self.y))
                 if (abs(distance_to_task[0]) == 1 and abs(distance_to_task[1]) == 0 or
                     abs(distance_to_task[0]) == 0 and abs(distance_to_task[1]) == 1 or
-                    abs(distance_to_task[0]) == 1 and abs(distance_to_task[1]) == 1):
+                    abs(distance_to_task[0]) == 1 and abs(distance_to_task[1]) == 1 or
+                    abs(distance_to_task[0]) == 0 and abs(distance_to_task[1]) == 0):
                     self.do_task()
 
                 else:
@@ -180,9 +227,56 @@ class Unit(Block):
         self.viewport.dirty = 1
 
         # work on task
-        result = self.task.do()
-        if result:
-            self.inventory.extend(result)
+        if isinstance(self.task, GatherItemTask):
+            result = self.task.do()
+            if result:
+                self.inventory.extend(result)
+
+        elif isinstance(self.task, BuildBuildingTask):
+            reqs = self.task.do()
+
+
+            availiable_items = []
+            unneeded_items = []
+
+            for item in self.inventory:
+                print(item)
+                for req in reqs:
+                    print(req)
+                    if isinstance(item, req[0]):
+                        availiable_items.append(item)
+                    else:
+                        unneeded_items.append(item)
+
+            for item in unneeded_items:
+                item.set_location(self.x, self.y)
+                item.dirty = 1
+
+            self.inventory = [ item for item in self.inventory if item not in unneeded_items ]
+            self.viewport.item_layer[self.y][self.x] = unneeded_items
+            self.viewport.dirty = 1
+            self.dirty = 1
+
+            self.inventory = []
+
+
+            built = False
+            while len(availiable_items) > 0 and not built:
+                item = availiable_items.pop()
+                reqs = self.task.do(item)
+                if len(reqs) == 0:
+                    built = True
+
+            if not built:
+                print("building not built!")
+                self.collection_target = reqs
+            else:
+                print("building built!")
+                self.collection_target = None
+
+            self.return_from_collection = False
+
+
 
     def check_collision(self, x, y):
 

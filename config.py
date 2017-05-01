@@ -16,7 +16,7 @@ hud_size = 150
 selection_border = 2
 
 
-unit_degeneration_change = 0.95
+unit_degeneration_change = 0.98
 
 
 starting_funds = 0
@@ -27,3 +27,5 @@ monthly_quota_max = 5000.0
 
 #month_time_length = (0, 15) # minutes, seconds
 month_time_length = (5, 0) # minutes, seconds
+
+

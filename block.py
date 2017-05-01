@@ -24,13 +24,14 @@ def init_block_images():
         IronWall,
         CopperWall,
         StoneWall,
-        Log,
+        Wood,
         Stone,
         Coal,
         Iron,
         Copper,
         Stockpile,
-        ReanimationChamber
+        ReanimationChamber,
+        BuildingMarker
     )
     Grass.load_images()
     CopperOreDeposit.load_images()
@@ -52,13 +53,14 @@ def init_block_images():
     CopperWall.load_images()
     StoneWall.load_images()
 
-    Log.load_images()
+    Wood.load_images()
     Stone.load_images()
     Coal.load_images()
     Iron.load_images()
     Copper.load_images()
 
     Stockpile.load_images()
+    BuildingMarker.load_images()
 
 class Block(DirtySprite):
 

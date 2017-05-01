@@ -3,6 +3,9 @@ import pygame
 import config
 from block import Block
 
+class Collidable():
+    pass
+
 
 class Item(Block):
 
@@ -170,17 +173,40 @@ class Container(Item):
                 return True
         return False
 
-    def retrive(self, type_of_item):
-        output = []
+    def retrieve(self, type_of_item):
         for item in self.items:
             if isinstance(item, type_of_item):
-                output.append( item )
                 self.items.remove(item)
-        return output
+                return item
+
+class Buildable(Item, Collidable):
+    def __init__(self, x, y, image, viewport):
+        Item.__init__(self, x, y, image, viewport)
 
 
+class BuildingPlaceholder:
+    def __init__(self, type_factory, requirements):
+        self.requirements  = [ {"type": req[0], "needed": req[1], "collected": 0} for req in requirements ]
+        self.built = False
+        self.type_factory = type_factory
 
-class Collidable():
-    pass
+    def build(self, material):
+        for req in self.requirements:
+            if req["type"] == type(material):
+                req["collected"] += 1
+        if len(self.get_required()) == 0:
+            # nothing left to fetch, replace with build object
+            self.built = True
+            self.viewport.item_layer[self.y][self.x] = self.type_factory(self.x, self.y, self.viewport)
+            self.viewport.dirty = True
+            self.dirty = 1
+
+    def get_required(self):
+        reqs = []
+        for req in self.requirements:
+            if req["collected"] < req["needed"]:
+                reqs.append( ( req["type"], req["needed"] - req["collected"]) )
+        return reqs
+
 
 
