@@ -1,3 +1,4 @@
+import math
 import datetime
 from collections import Counter
 
@@ -38,31 +39,36 @@ class Hud(DirtySprite):
             # clear hud
             surf.fill(pygame.Color("#000000"))
 
+            pygame.draw.line(surf, pygame.Color("#00AD03"),
+                    (10, 35),
+                    (config.window_size[0]-10, 35))
+
+
             fully_functioning_units = len(list(filter(lambda x: x.cooperation_rating >= 5, units)))
             unit_count = self.font.render("Functioning Units: {0}".format(fully_functioning_units), True, pygame.Color("#00AD03"))
-            surf.blit(unit_count, (10, 10))
+            surf.blit(unit_count, (35, 45))
 
             malfunctioning_units = len(list(filter(lambda x: 0 < x.cooperation_rating < 5, units)))
             unit_count = self.font.render("Malfunctioning Units: {0}".format(malfunctioning_units), True, pygame.Color("#00AD03"))
-            surf.blit(unit_count, (10, 35))
+            surf.blit(unit_count, (35, 70))
 
             rogue_units = len(list(filter(lambda x: x.cooperation_rating <= 0, units)))
             unit_count = self.font.render("Rogue Units: {0}".format(rogue_units), True, pygame.Color("#00AD03"))
-            surf.blit(unit_count, (10, 60))
+            surf.blit(unit_count, (35, 95))
 
-            idle_units = len(list(filter(lambda x: not x.task, units)))
-            unit_count = self.font.render("Idle Units: {0}".format(rogue_units), True, pygame.Color("#00AD03"))
-            surf.blit(unit_count, (300, 10))
+            idle_units = len(list(filter(lambda x: x.task is None, units)))
+            unit_count = self.font.render("Idle Units: {0}".format(idle_units), True, pygame.Color("#00AD03"))
+            surf.blit(unit_count, (35, 120))
 
             # alert rendering
-            pygame.draw.line(surf, pygame.Color("#00AD03"), (445, 5), (445, config.hud_size - 5))
+            pygame.draw.line(surf, pygame.Color("#00AD03"), (440, 35), (440, config.hud_size - 5))
 
-            pygame.draw.line(surf, pygame.Color("#00AD03"), (675, 5), (675, config.hud_size - 5))
+            pygame.draw.line(surf, pygame.Color("#00AD03"), (675, 35), (675, config.hud_size - 5))
 
-            if True or len(self.alerts) > 0: #TODO remove true
-                unit_count = self.font.render("Alerts: ", True, pygame.Color("#00AD03"))
-                surf.blit(unit_count, (455, 10))
+            unit_count = self.font.render("Alerts: ", True, pygame.Color("#00AD03"))
+            surf.blit(unit_count, (455, 35))
 
+            if len(self.alerts) > 0:
                 y_offset = 1
                 now = datetime.datetime.now()
 
@@ -71,7 +77,7 @@ class Hud(DirtySprite):
                         text = wrapline("<" + alert["message"] + ">", self.small_font, 500)
                         for line in text:
                             rendered_text = self.small_font.render(line, True, pygame.Color("#00AD03"))
-                            surf.blit(rendered_text, (445, 20 + y_offset * 15))
+                            surf.blit(rendered_text, (445, 45 + y_offset * 15))
                             y_offset += 1
                     else:
                         self.alerts.remove(alert)
@@ -80,14 +86,27 @@ class Hud(DirtySprite):
             # render unit info on hover
             if self.hovered_unit:
                 unit_name = self.font.render(self.hovered_unit.name, True, pygame.Color("#00AD03"))
-                surf.blit(unit_name, (700, 10))
+                surf.blit(unit_name, (700, 35))
+
+                height_offset = 60
+                height_offset_inc = 15
+
+                if self.hovered_unit.task is not None:
+                    unit_name = self.small_font.render("Task: " + self.hovered_unit.task.description, True, pygame.Color("#00AD03"))
+                    surf.blit(unit_name, (700, height_offset))
+                    height_offset += height_offset_inc
+                else:
+                    unit_name = self.small_font.render("Task: None", True, pygame.Color("#00AD03"))
+                    surf.blit(unit_name, (700, height_offset))
+                    height_offset += height_offset_inc
 
                 unit_name = self.small_font.render(
                         "Inventory: {0}/{1}".format(
                             len(self.hovered_unit.inventory),
                             self.hovered_unit.inventory_size),
                         True, pygame.Color("#00AD03"))
-                surf.blit(unit_name, (700, 35))
+                surf.blit(unit_name, (700, height_offset))
+                height_offset += height_offset_inc
 
                 simple_inv = [ item.name for item in self.hovered_unit.inventory ]
                 unique = set(simple_inv)
@@ -97,20 +116,20 @@ class Hud(DirtySprite):
 
                 for item in unique:
                     unit_name = self.small_font.render("- {0}x{1}".format(counter[item], item), True, pygame.Color("#00AD03"))
-                    surf.blit(unit_name, (700, 50 + y_offset * 15))
+                    surf.blit(unit_name, (700, height_offset + y_offset * height_offset_inc))
                     y_offset += 1
 
 
             elif self.hovered_stock_pile:
                 stock_pile = self.font.render("Stockpile", True, pygame.Color("#00AD03"))
-                surf.blit(stock_pile, (700, 10))
+                surf.blit(stock_pile, (700, 35))
 
                 contents = self.small_font.render(
                         "Contents: {0}/{1}".format(
                             len(self.hovered_stock_pile.items),
                             self.hovered_stock_pile.capacity),
                         True, pygame.Color("#00AD03"))
-                surf.blit(contents, (700, 35))
+                surf.blit(contents, (700, 60))
 
                 simple_contents = [ item.name for item in self.hovered_stock_pile.items ]
                 unique = set(simple_contents)
@@ -120,7 +139,7 @@ class Hud(DirtySprite):
 
                 for item in unique:
                     contents = self.small_font.render("- {0}x{1}".format(counter[item], item), True, pygame.Color("#00AD03"))
-                    surf.blit(contents, (700, 50 + y_offset * 15))
+                    surf.blit(contents, (700, 85 + y_offset * 15))
                     y_offset += 1
 
             else: # render stats
@@ -130,19 +149,19 @@ class Hud(DirtySprite):
                         self.enterprise.current_month,
                         self.enterprise.current_day),
                         True, pygame.Color("#00AD03"))
-                    surf.blit(month_day, (700, 10))
+                    surf.blit(month_day, (700, 35))
 
                     profit = self.font.render("Export Quota: ${0}/${1}".format(
                         self.enterprise.funds,
                         self.enterprise.monthly_quota),
                         True, pygame.Color("#00AD03"))
-                    surf.blit(profit, (700, 35))
+                    surf.blit(profit, (700, 60))
 
                     render = self.small_font.render("Availiable Resources:".format(
                         self.enterprise.funds,
                         self.enterprise.monthly_quota),
                         True, pygame.Color("#00AD03"))
-                    surf.blit(render, (700, 60))
+                    surf.blit(render, (700, 85))
 
                     items = []
                     for stock_pile in self.dispatcher.stock_piles:
@@ -155,8 +174,28 @@ class Hud(DirtySprite):
 
                     for item in unique:
                         contents = self.small_font.render("- {0}x{1}".format(counter[item], item), True, pygame.Color("#00AD03"))
-                        surf.blit(contents, (700, 75 + y_offset * 12))
+                        surf.blit(contents, (700, 110 + y_offset * 12))
                         y_offset += 1
+
+
+            if self.enterprise is not None and self.enterprise.paused:
+                paused_color = pygame.Color("#00AD03")
+
+            else:
+                paused_color = pygame.Color("#001700")
+
+            paused = self.font.render("*Paused*", True, paused_color)
+            surf.blit(paused, (
+                math.floor(config.window_size[0]/2) - math.floor(paused.get_rect().w/2),
+                5))
+
+            pygame.draw.line(surf, pygame.Color("#00AD03"),
+                    (math.floor(config.window_size[0]/2) - 75, 5),
+                    (math.floor(config.window_size[0]/2) - 75, 35))
+
+            pygame.draw.line(surf, pygame.Color("#00AD03"),
+                (math.floor(config.window_size[0]/2) + 75, 5),
+                (math.floor(config.window_size[0]/2) + 75, 35))
 
 
 

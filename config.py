@@ -1,17 +1,20 @@
 
-#display_scale=0.75
-display_scale=1.0
+display_scale=0.75
+#display_scale=1.0
 
-world_size = (100, 100)
+world_size = (50, 50)
+#world_size = (100, 100)
+#world_size = (200, 200)
 
 native_image_size = (32, 32)
-#image_size = (8, 8)
+#image_size = (16, 16)
+image_size = (32, 32)
 #image_size = (45, 45)
-image_size = (64, 64)
+#image_size = (64, 64)
 
 window_size = None
 
-hud_size = 150
+hud_size = 250
 
 selection_border = 2
 

@@ -125,6 +125,10 @@ class Unit(Block):
                         self.old_x = self.x
                         self.old_y = self.y
                         self.path_to(distance_to)
+                else:
+                    # not enough supplies availiable try again later
+                    self.task.postpone("Postponing construction task. Reason: Failed to find stockpile with required building materials.")
+                    self.task = None
 
 
 
@@ -229,7 +233,7 @@ class Unit(Block):
         # work on task
         if isinstance(self.task, GatherItemTask):
             result = self.task.do()
-            if result:
+            if result is not None:
                 self.inventory.extend(result)
 
         elif isinstance(self.task, BuildBuildingTask):
@@ -244,9 +248,11 @@ class Unit(Block):
                 for req in reqs:
                     print(req)
                     if isinstance(item, req[0]):
+                        print("needed", item)
                         availiable_items.append(item)
                     else:
                         unneeded_items.append(item)
+                        print("unneeded", item)
 
             for item in unneeded_items:
                 item.set_location(self.x, self.y)

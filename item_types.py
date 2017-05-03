@@ -66,10 +66,10 @@ class Item(Block):
             if self.collided and not self.selected:
                 b = config.selection_border
                 cpy = self.image.copy()
-                cpy.fill(pygame.Color("#000000"), rect=(0, 0, b, config.image_size[1]))
-                cpy.fill(pygame.Color("#000000"), rect=(config.image_size[0] - b, 0, b, config.image_size[1]))
-                cpy.fill(pygame.Color("#000000"), rect=(0, 0, config.image_size[1], b))
-                cpy.fill(pygame.Color("#000000"), rect=(0, config.image_size[0] - b, config.image_size[1], b))
+                cpy.fill(pygame.Color("#FF0000"), rect=(0, 0, b, config.image_size[1]))
+                cpy.fill(pygame.Color("#FF0000"), rect=(config.image_size[0] - b, 0, b, config.image_size[1]))
+                cpy.fill(pygame.Color("#FF0000"), rect=(0, 0, config.image_size[1], b))
+                cpy.fill(pygame.Color("#FF0000"), rect=(0, config.image_size[0] - b, config.image_size[1], b))
 
                 surf.blit(cpy, (self.rect.x, self.rect.y))
 
@@ -86,10 +86,10 @@ class Item(Block):
             elif self.selected and self.collided:
                 b = config.selection_border
                 cpy = self.image.copy()
-                cpy.fill(pygame.Color("#AAAAAA"), rect=(0, 0, b, config.image_size[1]))
-                cpy.fill(pygame.Color("#AAAAAA"), rect=(config.image_size[0] - b, 0, b, config.image_size[1]))
-                cpy.fill(pygame.Color("#AAAAAA"), rect=(0, 0, config.image_size[1], b))
-                cpy.fill(pygame.Color("#AAAAAA"), rect=(0, config.image_size[0] - b, config.image_size[1], b))
+                cpy.fill(pygame.Color("#888888"), rect=(0, 0, b, config.image_size[1]))
+                cpy.fill(pygame.Color("#888888"), rect=(config.image_size[0] - b, 0, b, config.image_size[1]))
+                cpy.fill(pygame.Color("#888888"), rect=(0, 0, config.image_size[1], b))
+                cpy.fill(pygame.Color("#888888"), rect=(0, config.image_size[0] - b, config.image_size[1], b))
 
                 surf.blit(cpy, (self.rect.x, self.rect.y))
 
@@ -116,35 +116,43 @@ class HoldableItem(Item):
 
 
 class HoldableItemSource():
-    def __init__(self, quantity, item_factory, collection_rate=1):
+    def __init__(self, quantity, item_factory, collection_rate=1, gather_time=2):
         self.quantity = quantity
         self.item_factory = item_factory
         self.exhausted = False
         self.collection_rate = collection_rate
+        self.gather_time = gather_time
+        self.gather_counter = 0
 
     def collect(self, max_collection=None):
         #TODO find some sort of scailing collection rate
         if not self.exhausted:
-            if max_collection:
-                collect = min(max_collection, self.collection_rate)
+            if self.gather_counter < self.gather_time:
+                self.gather_counter += 1
+                return []
             else:
-                collect = self.collection_rate
+                self.gather_counter = 0
 
-            if self.quantity - collect >= 0:
-                self.quantity -= collect
-                if self.quantity == 0:
+                if max_collection:
+                    collect = min(max_collection, self.collection_rate)
+                else:
+                    collect = self.collection_rate
 
-                    #remove self from item layer
-                    self.clear()
-                    self.viewport.item_layer[self.y][self.x] = None
-                    self.dirty = 1
-                    self.viewport.dirty = 1
+                if self.quantity - collect >= 0:
+                    self.quantity -= collect
+                    if self.quantity == 0:
 
-                return [ self.item_factory(0, 0, self.viewport) for _ in range(0, collect) ]
-            #TODO there is a missing case here figure it out
+                        #remove self from item layer
+                        self.clear()
+                        self.viewport.item_layer[self.y][self.x] = None
+                        self.dirty = 1
+                        self.viewport.dirty = 1
 
-            else:
-                return None
+                    return [ self.item_factory(0, 0, self.viewport) for _ in range(0, collect) ]
+                #TODO there is a missing case here figure it out
+
+                else:
+                    return None
         return None
 
     def remaining(self):

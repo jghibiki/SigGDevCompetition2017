@@ -76,7 +76,7 @@ vp.hud.dispatcher = dispatcher
 #dispatcher.tasks.append( Task( GenericTarget( 15, 7) ) )
 #dispatcher.tasks.append( Task( GenericTarget( 50, 50) ) )
 Unit.load_images()
-num_units = 5
+num_units = 10
 
 unit_count = 0
 for y in range(0, config.world_size[1]):
@@ -152,7 +152,9 @@ vp.dirty = 1
 vp.render()
 
 counter = 0
+paused = False
 
+pygame.event.clear()
 while True:
 
     for event in pygame.event.get():
@@ -163,23 +165,33 @@ while True:
             if event.key == K_ESCAPE:
                 pygame.quit()
                 sys.exit()
+            elif event.key == K_SPACE:
+                paused = not paused
+                if paused:
+                    enterprise.pause()
+                else:
+                    enterprise.resume()
+                vp.dirty = True # redraw hud
+
         elif event.type == MOUSEBUTTONUP:
             vp.mouse_events.append(event)
+
 
     dispatcher.handle_keyboard_events()
     vp.handle_keyboard_events()
     vp.handle_mouse_events()
 
-    enterprise.update()
+    if not paused:
+        enterprise.update()
 
-    if enterprise.failed:
-        break
+        if enterprise.failed:
+            break
 
-    if counter % 10 == 0:
-        dispatcher.update()
+        if counter % 10 == 0:
+            dispatcher.update()
 
-    if counter == 1000:
-        counter = 0
+        if counter == 1000:
+            counter = 0
 
     vp.render()
 
@@ -189,6 +201,8 @@ while True:
     pygame.display.update(rects)
     clock.tick(120)
 
+
+# outside of main game loop
 
 enterprise.update()
 

@@ -37,70 +37,17 @@ class Dispatcher:
                     continue
                 break
 
-        if keys[K_f]:
-            # adds a new furnace
+        if keys[K_w]:
+            # adds a new stone wall
             for y in range(0, config.world_size[0]):
                 for x in range(0, config.world_size[0]):
                     if self.viewport.map_layer[y][x].mouse_collide() and self.viewport.item_layer[y][x] == None:
-                        bm = BuildingMarker(x, y, self.viewport, Furnace, [ [Stone, 100], [Wood, 200] ])
+                        bm = BuildingMarker(x, y, self.viewport, StoneWall, [ [Stone, 50]])
                         self.tasks.append( BuildBuildingTask( bm, self ) )
                         self.viewport.item_layer[y][x] = bm
                         self.viewport.dirty = 1
                         break
 
-        if keys[K_i]:
-            # adds a new indoctrination chamber
-            for y in range(0, config.world_size[0]):
-                for x in range(0, config.world_size[0]):
-                    if self.viewport.map_layer[y][x].mouse_collide() and self.viewport.item_layer[y][x] == None:
-                        bm = BuildingMarker(x, y, self.viewport, IndoctrinationChamber, [ [Copper, 100], [Iron, 100]])
-                        self.tasks.append( BuildBuildingTask( bm, self ) )
-                        self.viewport.item_layer[y][x] = bm
-                        self.viewport.dirty = 1
-                        break
-        if keys[K_r]:
-            # adds a new reanimation chamber
-            for y in range(0, config.world_size[0]):
-                for x in range(0, config.world_size[0]):
-                    if self.viewport.map_layer[y][x].mouse_collide() and self.viewport.item_layer[y][x] == None:
-                        bm = BuildingMarker(x, y, self.viewport, ReanimationChamber, [ [Copper, 200], [Iron, 200] ])
-                        self.tasks.append( BuildBuildingTask( bm, self ) )
-                        self.viewport.item_layer[y][x] = bm
-                        self.viewport.dirty = 1
-                        break
-
-        if keys[K_t]:
-            # adds a new science station
-            for y in range(0, config.world_size[0]):
-                for x in range(0, config.world_size[0]):
-                    if self.viewport.map_layer[y][x].mouse_collide() and self.viewport.item_layer[y][x] == None:
-                        bm = BuildingMarker(x, y, self.viewport, ScienceStation, [ [Iron, 100], [Copper, 300] ])
-                        self.tasks.append( BuildBuildingTask( bm, self ) )
-                        self.viewport.item_layer[y][x] = bm
-                        self.viewport.dirty = 1
-                        break
-
-        if keys[K_p]:
-            # adds a new science station
-            for y in range(0, config.world_size[0]):
-                for x in range(0, config.world_size[0]):
-                    if self.viewport.map_layer[y][x].mouse_collide() and self.viewport.item_layer[y][x] == None:
-                        bm = BuildingMarker(x, y, self.viewport, Printer, [ [Iron, 500], [Copper, 500] ])
-                        self.tasks.append( BuildBuildingTask( bm, self ) )
-                        self.viewport.item_layer[y][x] = bm
-                        self.viewport.dirty = 1
-                        break
-
-        if keys[K_d]:
-            # adds a new science station
-            for y in range(0, config.world_size[0]):
-                for x in range(0, config.world_size[0]):
-                    if self.viewport.map_layer[y][x].mouse_collide() and self.viewport.item_layer[y][x] == None:
-                        bm = BuildingMarker(x, y, self.viewport, DeliveryBot, [ [Copper, 50], [Iron, 50] ])
-                        self.tasks.append( BuildBuildingTask( bm, self ) )
-                        self.viewport.item_layer[y][x] = bm
-                        self.viewport.dirty = 1
-                        break
 
     def update(self):
         selected_items = []
@@ -166,11 +113,12 @@ class Dispatcher:
 
 
 class Task:
-    def __init__(self, target, dispatcher):
+    def __init__(self, target, dispatcher, description):
         self.target = target
         self.dispatcher = dispatcher
         self.done = False
         self.aborted = False
+        self.description = description #TODO allow for descriptions of tasks with multiple stages.
 
     def distance_to_target(self, pos):
         return ( self.target.x - pos[0], self.target.y - pos[1] )
@@ -194,15 +142,24 @@ class Task:
         self.target.dirty = 1
         self.target.viewport.dirty = 1
 
+    def postpone(self, reason=None):
+        if reason:
+            self.dispatcher.viewport.hud.add_alert(reason)
+
+        self.end_task()
+        if self not in self.dispatcher.tasks:
+            self.dispatcher.tasks.append(self)
+
+
 
 class GatherItemTask(Task):
     def __init__(self, target, dispatcher):
-        Task.__init__(self, target, dispatcher)
+        Task.__init__(self, target, dispatcher, "Gathering item from item source") # TODO update description to be more detailed
 
     def do(self):
         # TODO: allow collection rate to scale
         collected = self.target.collect()
-        if not collected:
+        if collected is None:
             self.done = True
             self.end_task()
         return collected
@@ -210,12 +167,13 @@ class GatherItemTask(Task):
     def end_task(self):
         Task.end_task(self)
         if isinstance(self.target, Item):
-            self.target.selected = False
+            pass
+            #self.target.selected = False
 
 
 class BuildBuildingTask(Task):
     def __init__(self, target, dispatcher):
-        Task.__init__(self, target, dispatcher)
+        Task.__init__(self, target, dispatcher, "Building building.") #TODO update description to be more detailed.
 
     def do(self, material=None):
         if material:

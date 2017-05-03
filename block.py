@@ -13,18 +13,14 @@ def init_block_images():
         IronOreDeposit,
         CoalDeposit,
         StoneDeposit,
-        Tree,
         Coal,
         Dirt,
         Furnace,
         ScienceStation,
         Printer,
         IndoctrinationChamber,
-        WoodenWall,
         IronWall,
-        CopperWall,
         StoneWall,
-        Wood,
         Stone,
         Coal,
         Iron,
@@ -39,7 +35,6 @@ def init_block_images():
     IronOreDeposit.load_images()
     CoalDeposit.load_images()
     StoneDeposit.load_images()
-    Tree.load_images()
     Coal.load_images()
     Dirt.load_images()
 
@@ -50,12 +45,9 @@ def init_block_images():
     ReanimationChamber.load_images()
     DeliveryBot.load_images()
 
-    WoodenWall.load_images()
     IronWall.load_images()
-    CopperWall.load_images()
     StoneWall.load_images()
 
-    Wood.load_images()
     Stone.load_images()
     Coal.load_images()
     Iron.load_images()
