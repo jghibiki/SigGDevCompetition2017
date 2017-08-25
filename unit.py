@@ -5,6 +5,10 @@ import json
 
 import pygame
 
+from pathfinding.core.diagonal_movement import DiagonalMovement
+from pathfinding.core.grid import Grid
+from pathfinding.finder.a_star import AStarFinder
+
 import config
 from block import Block
 from item_types import *
@@ -54,7 +58,6 @@ class Unit(Block):
 
         self.id = str(uuid4())
 
-
         self.work_surf = None
 
         self.task = None
@@ -62,7 +65,7 @@ class Unit(Block):
         self.collection_target = None
         self.return_from_collection = False
 
-        self.dirty = 2
+        self.dirty = 1
 
 
     def update(self):
@@ -124,11 +127,13 @@ class Unit(Block):
                         print("pathing to")
                         self.old_x = self.x
                         self.old_y = self.y
-                        self.path_to(distance_to)
+                        self.path_to((closest.x, closest.y))
                 else:
                     # not enough supplies availiable try again later
-                    self.task.postpone("Postponing construction task. Reason: Failed to find stockpile with required building materials.")
+                    print("postponing")
+                    self.task.postpone("{0} postponing construction task. Reason: Failed to find stockpile with required building materials.".format(self.name))
                     self.task = None
+                    self.collection_target = None
 
 
 
@@ -141,47 +146,28 @@ class Unit(Block):
 
                     if len(mapping) > 0:
                         closest = min(mapping, key=lambda x: x[0])[1]
-                        self.stock_pile = closest
+                        if closest is not None:
+                            print("set stockpile")
+                            self.stock_pile = closest
                         return
                     else:
+                        if self.task is not None:
+                            self.task.postpone("{0} postponing task. Reason: Failed to find stockpile with required storage space.".format(self.name))
+                            self.task = None
 
-                        # if we get here there were no valid stock piles so we will just drop everything on the ground
-                        for item in self.inventory:
-                            item.set_location(self.x, self.y)
-                            item.dirty = 1
-
-                        self.viewport.item_layer[self.y][self.x] = self.inventory[:]
-                        self.viewport.dirty = 1
-                        self.dirty = 1
-
-                        self.inventory = []
 
                 else: # there is a stockpile that is availiable
 
                     if self.turns_stuck >= 5: # we got stuck
                         self.viewport.hud.add_alert("{0} canceled store item in stockpile. Reason: could not find a clear path.".format(self.name))
-
-                        # we will just dump inventory on ground
-                        for item in self.inventory:
-                            item.set_location(self.x, self.y)
-                            item.dirty = 1
-
-                        self.viewport.item_layer[self.y][self.x] = self.inventory[:]
-                        self.viewport.dirty = 1
-                        self.dirty = 1
-
-                        self.inventory = []
-
                         return
 
                     else:
                         distance_to = (self.stock_pile.x - self.x, self.stock_pile.y - self.y)
                         if (abs(distance_to[0]) == 1 and abs(distance_to[1]) == 0 or
                             abs(distance_to[0]) == 0 and abs(distance_to[1]) == 1 or
-                            abs(distance_to[0]) == 1 and abs(distance_to[1]) == 1 or
-                            abs(distance_to[0]) == 0 and abs(distance_to[1]) == 0):
+                            abs(distance_to[0]) == 1 and abs(distance_to[1]) == 1):
 
-                            print("dumping inventory")
                             while self.stock_pile.can_store() and len(self.inventory) > 0:
 
                                 item = self.inventory.pop()
@@ -193,7 +179,7 @@ class Unit(Block):
                             # try to path to stock pile
                             self.old_x = self.x
                             self.old_y = self.y
-                            self.path_to(distance_to)
+                            self.path_to((self.stock_pile.x, self.stock_pile.y))
 
             elif self.task:
 
@@ -215,26 +201,41 @@ class Unit(Block):
                 distance_to_task = self.task.distance_to_target((self.x, self.y))
                 if (abs(distance_to_task[0]) == 1 and abs(distance_to_task[1]) == 0 or
                     abs(distance_to_task[0]) == 0 and abs(distance_to_task[1]) == 1 or
-                    abs(distance_to_task[0]) == 1 and abs(distance_to_task[1]) == 1 or
-                    abs(distance_to_task[0]) == 0 and abs(distance_to_task[1]) == 0):
+                    abs(distance_to_task[0]) == 1 and abs(distance_to_task[1]) == 1):
                     self.do_task()
 
                 else:
                     self.old_x = self.x
                     self.old_y = self.y
-                    self.path_to(distance_to_task)
+                    result = self.path_to((self.task.target.x, self.task.target.y))
+                    if not result:
+                        self.task.postpone("{0} postponing task \"{1}\". Reason: Failed to find a clear path to task.".format(self.name, self.task.description))
+                        self.task = None
 
     def do_task(self):
         # set work target
-        self.work_target = (self.task.target.x * config.image_size[0], self.task.target.y * config.image_size[1])
+        if not isinstance(self.task, WanderingTask):
+            self.work_target = (self.task.target.x * config.image_size[0], self.task.target.y * config.image_size[1])
+        else: self.work_target = None
+
         self.dirty = 1
         self.viewport.dirty = 1
 
         # work on task
         if isinstance(self.task, GatherItemTask):
-            result = self.task.do()
-            if result is not None:
-                self.inventory.extend(result)
+            if len(self.inventory) < self.inventory_size:
+                result = self.task.do()
+                if result is not None:
+                    self.inventory.extend(result)
+            else:
+                self.task.postpone("{0} postponing task \"{1}\". Reason: Inventory full.".format(self.name, self.task.description))
+                self.task = None
+
+        elif isinstance(self.task, PickUpLooseItemTask):
+            if len(self.inventory) < self.inventory_size:
+                result = self.task.do()
+                self.inventory.append(result)
+                self.task = None # this task is a one-and-done
 
         elif isinstance(self.task, BuildBuildingTask):
             reqs = self.task.do()
@@ -274,13 +275,14 @@ class Unit(Block):
                     built = True
 
             if not built:
-                print("building not built!")
                 self.collection_target = reqs
             else:
-                print("building built!")
                 self.collection_target = None
-
             self.return_from_collection = False
+
+        elif isinstance(self.task, WanderingTask):
+            self.task = None
+
 
 
 
@@ -341,125 +343,48 @@ class Unit(Block):
         return collided
 
 
-    def path_to(self, distance_to):
-        stuck = True
+    def path_to(self, pos):
 
-        if distance_to[0] > 0:
-            if not self.check_collision(self.x+1, self.y):
-                self.x += 1
-                self.rect.x += config.image_size[0]
-                self.dirty = 1
-                self.viewport.dirty = 1
-                stuck = False
-                self.turns_stuck = 0
+        matrix = []
 
-        if distance_to[0] < 0:
-            if not self.check_collision(self.x-1, self.y):
-                self.x -= 1
-                self.rect.x -= config.image_size[0]
-                self.dirty = 1
-                self.viewport.dirty = 1
-                stuck = False
-                self.turns_stuck = 0
+        for y in range(0, config.world_size[1]):
+            col = []
+            for x in range(0, config.world_size[0]):
+                if x == pos[0] and y == pos[1]:
+                    collidable = 0
+                else:
+                    collidable = 1 if isinstance(self.viewport.item_layer[y][x], Collidable) else 0
 
-        if distance_to[1] > 0:
-            if not self.check_collision(self.x, self.y+1):
-                self.y += 1
-                self.rect.y += config.image_size[1]
-                self.dirty = 1
-                self.viewport.dirty = 1
-                stuck = False
-                self.turns_stuck = 0
+                for unit in self.dispatcher.units:
+                    if unit.x == x and unit.y == y:
+                        collidable = 1
 
-        if distance_to[1] < 0:
-            if not self.check_collision(self.x, self.y-1):
-                self.y -= 1
-                self.rect.y -= config.image_size[1]
-                self.dirty = 1
-                self.viewport.dirty = 1
-                stuck = False
-                self.turns_stuck = 0
+                col.append(collidable)
+            matrix.append(col)
 
-        if stuck and ( abs(distance_to[0]) > 0 or abs(distance_to[1]) > 0 ):
+        grid = Grid(matrix=matrix)
 
-            self.turns_stuck += 1
+        start = grid.node(self.x, self.y)
+        end = grid.node(*pos)
 
-            if self.stuck_location is None:
-                self.stuck_location = (self.x , self.y)
-
-            if abs(self.stuck_location[0] - self.x ) > 2 and abs(self.stuck_location[1] - self.y):
-                print("unstuck")
-                self.stuck_location = None
-                self.stuck_options_tried = [ False, False, False, False ]
-                self.turns_stuck = 0
+        finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
+        path, runs = finder.find_path(start, end, grid)
 
 
-            if not self.stuck_options_tried[0]:
-                print("tried option 1")
+        if len(path) > 1:
+            self.x = path[1][0]
+            self.rect.x = path[1][0] * config.image_size[0]
 
-                self.stuck_options_tried[0] = True
+            self.y = path[1][1]
+            self.rect.y = path[1][1] * config.image_size[1]
 
-                if not self.check_collision(self.y-1, self.x-1):
-                    print("option 1")
-                    self.x -= 1
-                    self.rect.x -= config.image_size[0]
+            self.dirty = 1
+            self.viewport.dirty = 1
 
-                    self.y -= 1
-                    self.rect.y -= config.image_size[1]
+            return True
+        else:
+            return False
 
-                    self.dirty = 1
-                    self.viewport.dirty = 1
-                    stuck = False
-
-            elif not self.stuck_options_tried[1]:
-                print("tried option 2")
-
-                self.stuck_options_tried[1] = True
-
-                if not self.check_collision(self.x-1, self.y+1):
-                    print("option 2")
-                    self.x -= 1
-                    self.rect.x -= config.image_size[0]
-
-                    self.y += 1
-                    self.rect.y += config.image_size[1]
-
-                    self.dirty = 1
-                    self.viewport.dirty = 1
-                    stuck = False
-
-            elif not self.stuck_options_tried[2]:
-                self.stuck_options_tried[2] = True
-                print("tried option 3")
-
-                if not self.check_collision(self.x+1, self.y+1):
-                    print("option 3")
-                    self.x += 1
-                    self.rect.x += config.image_size[0]
-
-                    self.y += 1
-                    self.rect.y += config.image_size[1]
-
-                    self.dirty = 1
-                    self.viewport.dirty = 1
-                    stuck = False
-
-            elif not self.stuck_options_tried[3]:
-                self.stuck_options_tried[3] = True
-                print("tried option 4")
-
-                if not self.check_collision(self.x+1, self.y-1):
-                    print("option 4")
-
-                    self.x += 1
-                    self.rect.x += config.image_size[0]
-
-                    self.y -= 1
-                    self.rect.y -= config.image_size[1]
-
-                    self.dirty = 1
-                    self.viewport.dirty = 1
-                    stuck = False
 
     def check_collision(self, x, y):
 

@@ -4,41 +4,46 @@ import config
 from item_types import *
 
 class Coal(HoldableItem):
+    name = "Coal"
+
     @classmethod
     def load_images(cls):
         cls.image = pygame.image.load("assets/coal.png")
         cls.image = pygame.transform.scale(cls.image, config.image_size)
 
     def __init__(self, x, y, viewport):
-        HoldableItem.__init__(self, "Coal", x, y, Coal.image, viewport)
+        HoldableItem.__init__(self, Coal.name, x, y, Coal.image, viewport)
 
 
 class Stone(HoldableItem):
+    name = "Stone"
     @classmethod
     def load_images(cls):
         cls.image = pygame.image.load("assets/stone.png")
         cls.image = pygame.transform.scale(cls.image, config.image_size)
 
     def __init__(self, x, y, viewport):
-        HoldableItem.__init__(self, "Stone",  x, y, Stone.image, viewport)
+        HoldableItem.__init__(self, Stone.name,  x, y, Stone.image, viewport)
 
 class Iron(HoldableItem):
+    name = "Iron"
     @classmethod
     def load_images(cls):
         cls.image = pygame.image.load("assets/iron.png")
         cls.image = pygame.transform.scale(cls.image, config.image_size)
 
     def __init__(self, x, y, viewport):
-        HoldableItem.__init__(self, "Iron", x, y, Iron.image, viewport)
+        HoldableItem.__init__(self, Iron.name, x, y, Iron.image, viewport)
 
 class Copper(HoldableItem):
+    name = "Copper"
     @classmethod
     def load_images(cls):
         cls.image = pygame.image.load("assets/copper.png")
         cls.image = pygame.transform.scale(cls.image, config.image_size)
 
     def __init__(self, x, y, viewport):
-        HoldableItem.__init__(self, "Copper", x, y, Copper.image, viewport)
+        HoldableItem.__init__(self, Copper.name, x, y, Copper.image, viewport)
 
 
 class Grass(Block):
@@ -111,22 +116,27 @@ class Dirt(Item):
         Item.__init__(self, x, y, Dirt.image, viewport)
 
 class IronWall(Buildable):
+    name = "Iron Wall"
+
     @classmethod
     def load_images(cls):
         cls.image = pygame.image.load("assets/iron_wall.png")
         cls.image = pygame.transform.scale(cls.image, config.image_size)
 
     def __init__(self, x, y, viewport):
-        Buildable.__init__(self, x, y, IronWall.image, viewport)
+        Buildable.__init__(self, IronWall.name, x, y, IronWall.image, viewport)
 
 class StoneWall(Buildable):
+
+    name = "Stone Wall"
+
     @classmethod
     def load_images(cls):
         cls.image = pygame.image.load("assets/stone_wall.png")
         cls.image = pygame.transform.scale(cls.image, config.image_size)
 
     def __init__(self, x, y, viewport):
-        Buildable.__init__(self, x, y, StoneWall.image, viewport)
+        Buildable.__init__(self, StoneWall.name, x, y, StoneWall.image, viewport)
 
 class Stockpile(Container):
     @classmethod
@@ -139,33 +149,39 @@ class Stockpile(Container):
 
 
 class ReanimationChamber(Buildable):
+    name = "Reanimation Chamber"
+
     @classmethod
     def load_images(cls):
         cls.image = pygame.image.load("assets/reanimation_chamber.png")
         cls.image = pygame.transform.scale(cls.image, config.image_size)
 
     def __init__(self, x, y, viewport):
-        Item.__init__(self, x, y, ReanimationChamber.image, viewport)
+        Buildable.__init__(self, ReanimationChamber.name, x, y, ReanimationChamber.image, viewport)
 
 
 class Furnace(Buildable):
+    name = "Furnace"
+
     @classmethod
     def load_images(cls):
         cls.image = pygame.image.load("assets/furnace.png")
         cls.image = pygame.transform.scale(cls.image, config.image_size)
 
     def __init__(self, x, y, viewport):
-        Item.__init__(self, x, y, Furnace.image, viewport)
+        Buildable.__init__(self, Furnace.name, x, y, Furnace.image, viewport)
 
 
 class ScienceStation(Buildable):
+    name = "Science Station"
+
     @classmethod
     def load_images(cls):
         cls.image = pygame.image.load("assets/science_station.png")
         cls.image = pygame.transform.scale(cls.image, config.image_size)
 
     def __init__(self, x, y, viewport):
-        Item.__init__(self, x, y, ScienceStation.image, viewport)
+        Buildable.__init__(self, ScienceStation.name, x, y, ScienceStation.image, viewport)
 
 
 class Printer(Buildable):
@@ -175,32 +191,37 @@ class Printer(Buildable):
         cls.image = pygame.transform.scale(cls.image, config.image_size)
 
     def __init__(self, x, y, viewport):
-        Item.__init__(self, x, y, Printer.image, viewport)
+        Buildable.__init__(self, "Printer", x, y, Printer.image, viewport)
 
 class IndoctrinationChamber(Buildable):
+    name = "Indoctrination Chamber"
+
     @classmethod
     def load_images(cls):
         cls.image = pygame.image.load("assets/indoctrination_chamber.png")
         cls.image = pygame.transform.scale(cls.image, config.image_size)
 
     def __init__(self, x, y, viewport):
-        Item.__init__(self, x, y, IndoctrinationChamber.image, viewport)
+        Buildable.__init__(self, IndoctrinationChamber.name, x, y, IndoctrinationChamber.image, viewport)
 
 class DeliveryBot(Buildable):
+
+    name = "Delivery Bot"
+
     @classmethod
     def load_images(cls):
         cls.image = pygame.image.load("assets/delivery_bot.png")
         cls.image = pygame.transform.scale(cls.image, config.image_size)
 
     def __init__(self, x, y, viewport):
-        Item.__init__(self, x, y, DeliveryBot.image, viewport)
+        Buildable.__init__(self, DeliveryBot.name, x, y, DeliveryBot.image, viewport)
 
-class BuildingMarker(Item, Collidable, BuildingPlaceholder):
+class BuildingMarker(Item, BuildingPlaceholder):
     @classmethod
     def load_images(cls):
         cls.image = pygame.image.load("assets/building_marker.png")
         cls.image = pygame.transform.scale(cls.image, config.image_size)
 
     def __init__(self, x, y, viewport, type_factory, requirements):
-        Item.__init__(self, x, y, BuildingMarker.image, viewport, False)
+        Item.__init__(self, x, y, BuildingMarker.image, viewport, targetable=False, hoverable=True)
         BuildingPlaceholder.__init__(self, type_factory, requirements)

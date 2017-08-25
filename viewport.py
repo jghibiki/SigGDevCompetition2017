@@ -111,6 +111,7 @@ class Viewport():
             self.dirty = 1
 
         hovering_stock_pile = False
+        hovering_building_placeholder = False
         for y in self.item_layer:
             for x in y:
                 if isinstance(x, Stockpile):
@@ -119,9 +120,19 @@ class Viewport():
                         self.dirty = 1
                         hovering_stock_pile= True
                         break
+                if isinstance(x, BuildingPlaceholder):
+                    if x.mouse_collide(mouse_pos, side_effect=False) or x.mouse_collide(side_effect=False):
+                        self.hud.hovered_building_placeholder = x
+                        self.dirty = 1
+                        hovering_building_placeholder = True
+                        break
 
         if not hovering_stock_pile and self.hud.hovered_stock_pile != None:
             self.hud.hovered_stock_pile = None
+            self.dirty = 1
+
+        if not hovering_building_placeholder and self.hud.hovered_building_placeholder != None:
+            self.hud.hovered_building_placeholder = None
             self.dirty = 1
 
         self.mouse_events = []

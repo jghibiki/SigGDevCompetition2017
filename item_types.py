@@ -9,10 +9,11 @@ class Collidable():
 
 class Item(Block):
 
-    def __init__(self, x, y, image, viewport, targetable=True):
+    def __init__(self, x, y, image, viewport, targetable=True, hoverable=True):
         Block.__init__(self, x, y, image, viewport)
 
         self.targetable = targetable
+        self.hoverable = targetable or hoverable
 
         self.collided = False
 
@@ -36,7 +37,7 @@ class Item(Block):
         previously_collided = self.collided
         self.collided = collided
 
-        if self.targetable and side_effect:
+        if (self.targetable or self.hoverable) and side_effect:
             if ( (not previously_collided and collided) or
                  (previously_collided and not collided) ):
                 self.dirty = 1
@@ -188,8 +189,9 @@ class Container(Item):
                 return item
 
 class Buildable(Item, Collidable):
-    def __init__(self, x, y, image, viewport):
+    def __init__(self, name, x, y, image, viewport):
         Item.__init__(self, x, y, image, viewport)
+        self.name = name
 
 
 class BuildingPlaceholder:

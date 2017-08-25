@@ -7,6 +7,7 @@ from pygame.sprite import DirtySprite
 
 import config
 from utils import wrapline
+from dispatch import *
 
 class Hud(DirtySprite):
 
@@ -24,6 +25,7 @@ class Hud(DirtySprite):
 
         self.hovered_unit = None
         self.hovered_stock_pile = None
+        self.hovered_building_placeholder = None
 
         self.dirty = 2
 
@@ -46,27 +48,31 @@ class Hud(DirtySprite):
 
             fully_functioning_units = len(list(filter(lambda x: x.cooperation_rating >= 5, units)))
             unit_count = self.font.render("Functioning Units: {0}".format(fully_functioning_units), True, pygame.Color("#00AD03"))
-            surf.blit(unit_count, (35, 45))
+            surf.blit(unit_count, (10, 45))
 
             malfunctioning_units = len(list(filter(lambda x: 0 < x.cooperation_rating < 5, units)))
             unit_count = self.font.render("Malfunctioning Units: {0}".format(malfunctioning_units), True, pygame.Color("#00AD03"))
-            surf.blit(unit_count, (35, 70))
+            surf.blit(unit_count, (10, 70))
 
             rogue_units = len(list(filter(lambda x: x.cooperation_rating <= 0, units)))
             unit_count = self.font.render("Rogue Units: {0}".format(rogue_units), True, pygame.Color("#00AD03"))
-            surf.blit(unit_count, (35, 95))
+            surf.blit(unit_count, (10, 95))
 
-            idle_units = len(list(filter(lambda x: x.task is None, units)))
+            idle_units = len(list(filter(lambda x: x.task is None or isinstance(x.task, IdleTask), units)))
             unit_count = self.font.render("Idle Units: {0}".format(idle_units), True, pygame.Color("#00AD03"))
-            surf.blit(unit_count, (35, 120))
+            surf.blit(unit_count, (10, 120))
+
+            num_tasks = len(self.dispatcher.tasks)
+            num_tasks = self.font.render("Availiable Tasks: {0}".format(num_tasks), True, pygame.Color("#00AD03"))
+            surf.blit(num_tasks, (10, 145))
 
             # alert rendering
-            pygame.draw.line(surf, pygame.Color("#00AD03"), (440, 35), (440, config.hud_size - 5))
+            pygame.draw.line(surf, pygame.Color("#00AD03"), (300, 35), (300, config.hud_size - 5))
 
             pygame.draw.line(surf, pygame.Color("#00AD03"), (675, 35), (675, config.hud_size - 5))
 
             unit_count = self.font.render("Alerts: ", True, pygame.Color("#00AD03"))
-            surf.blit(unit_count, (455, 35))
+            surf.blit(unit_count, (305, 35))
 
             if len(self.alerts) > 0:
                 y_offset = 1
@@ -74,10 +80,10 @@ class Hud(DirtySprite):
 
                 for alert in self.alerts:
                     if alert["expiration"] > now:
-                        text = wrapline("<" + alert["message"] + ">", self.small_font, 500)
+                        text = wrapline("<" + alert["message"] + ">", self.small_font, 700)
                         for line in text:
                             rendered_text = self.small_font.render(line, True, pygame.Color("#00AD03"))
-                            surf.blit(rendered_text, (445, 45 + y_offset * 15))
+                            surf.blit(rendered_text, (305, 45 + y_offset * 15))
                             y_offset += 1
                     else:
                         self.alerts.remove(alert)
@@ -142,6 +148,28 @@ class Hud(DirtySprite):
                     surf.blit(contents, (700, 85 + y_offset * 15))
                     y_offset += 1
 
+            elif self.hovered_building_placeholder:
+                placeholder_title = self.font.render("Building {}...".format(self.hovered_building_placeholder.type_factory.name), True, pygame.Color("#00AD03"))
+                surf.blit(placeholder_title, (700, 35))
+
+                # calculate competion
+                count = sum([ e["collected"] for e in self.hovered_building_placeholder.requirements])
+                needed = sum([ e["needed"] for e in self.hovered_building_placeholder.requirements])
+                percent_complete = (count/needed)*100
+
+                needed_materials = [ e["type"].name for e in self.hovered_building_placeholder.requirements if e["needed"] > e["collected"] ]
+                needed_materials_text = ', '.join(needed_materials)
+
+                content1 = self.small_font.render(
+                        "{}% Complete".format(percent_complete), True, pygame.Color("#00AD03"))
+                surf.blit(content1, (700, 60))
+
+                content2 = self.small_font.render(
+                        "Needs: {}".format(needed_materials_text), True, pygame.Color("#00AD03"))
+                surf.blit(content2, (700, 85))
+
+
+
             else: # render stats
 
                 if self.enterprise is not None:
@@ -201,12 +229,12 @@ class Hud(DirtySprite):
 
 
     def add_alert(self, msg):
-        if len(self.alerts) == 2: # remove alert before adding another
+        if len(self.alerts) == 4: # remove alert before adding another
             to_remove = min(self.alerts, key=lambda x: x["expiration"])
             self.alerts.remove(to_remove)
 
         self.alerts.append({
-            "expiration": datetime.datetime.now() + datetime.timedelta(seconds=15),
+            "expiration": datetime.datetime.now() + datetime.timedelta(seconds=5),
             "message": msg})
 
 
