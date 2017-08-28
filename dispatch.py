@@ -221,6 +221,8 @@ class GatherItemTask(Task):
     def __init__(self, target, dispatcher):
         Task.__init__(self, target, dispatcher, "Gathering item from item source") # TODO update description to be more detailed
 
+        self._done = False
+
     def do(self):
         # TODO: allow collection rate to scale
         collected = self.target.collect()
@@ -228,6 +230,19 @@ class GatherItemTask(Task):
             self.done = True
             self.end_task()
         return collected
+
+
+    @property
+    def done(self):
+        if self.target.exhausted:
+            return True
+        else:
+            return self._done
+
+    @done.setter
+    def done(self, value):
+        self._done = value
+
 
     def end_task(self):
         Task.end_task(self)

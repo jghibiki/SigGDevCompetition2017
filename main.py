@@ -96,6 +96,7 @@ if __name__ == "__main__":
 
 
 # do initial render while we are still on loading screen
+    vp.update()
     vp.render()
 
 #TODO: INSERT STORY HERE
@@ -144,6 +145,7 @@ if __name__ == "__main__":
 
     # render once quick before first loop
     window_surf.fill(pygame.Color("#000000"))
+    vp.update()
     rects = vp.draw(window_surf)
     pygame.display.update(rects)
 
@@ -151,6 +153,7 @@ if __name__ == "__main__":
     enterprise = Enterprise()
     vp.hud.enterprise = enterprise
     vp.dirty = 1
+    vp.update()
     vp.render()
 
     counter = 0
@@ -195,8 +198,8 @@ if __name__ == "__main__":
             if counter == 1000:
                 counter = 0
 
+        vp.update()
         vp.render()
-
         rects = vp.draw(window_surf)
 
         counter += 1

@@ -144,6 +144,7 @@ class HoldableItemSource():
                     if self.quantity == 0:
 
                         #remove self from item layer
+                        self.exhausted = True
                         self.clear()
                         self.viewport.item_layer[self.y][self.x] = None
                         self.dirty = 1
@@ -153,6 +154,7 @@ class HoldableItemSource():
                 #TODO there is a missing case here figure it out
 
                 else:
+                    self.exhausted = True
                     return None
         return None
 

@@ -7,6 +7,7 @@ import config
 from hud import Hud
 from block import *
 from items import *
+from areas import *
 
 
 class Viewport():
@@ -20,6 +21,11 @@ class Viewport():
 
         self.map_layer = []
         self.map_layer_surf= pygame.Surface((self.map_rect.w, self.map_rect.h))
+
+        self.area_layer = [
+            MeetingArea([ (x, y) for x in range(10) for y in range(10) ])
+        ]
+        self.area_layer_surf = pygame.Surface((self.map_rect.w, self.map_rect.h), flags=pygame.SRCALPHA)
 
         self.item_layer = []
         self.item_layer_surf= pygame.Surface((self.map_rect.w, self.map_rect.h), flags=pygame.SRCALPHA)
@@ -137,6 +143,10 @@ class Viewport():
 
         self.mouse_events = []
 
+    def update(self):
+        for area in self.area_layer:
+            area.update()
+
     def render(self):
         if self.dirty == 1 or self.dirty == 2:
             if self.dirty == 1:
@@ -159,6 +169,10 @@ class Viewport():
 
                     diff_rects.append(map_diff)
 
+            for area in self.area_layer:
+                diff = area.draw(self.area_layer_surf)
+                diff_rects.append(diff)
+
             for unit in self.unit_layer:
                 unit.draw(self.unit_layer_surf)
 
@@ -176,6 +190,9 @@ class Viewport():
 
         # draw map layer
         rects.append( surf.blit(self.map_layer_surf, (0, 0),  area=self.v_rect) )
+
+        # draw area layer
+        rects.append( surf.blit(self.area_layer_surf, (0, 0), area=self.v_rect) )
 
         # item layer
         rects.append( surf.blit(self.item_layer_surf, (0, 0),  area=self.v_rect) )

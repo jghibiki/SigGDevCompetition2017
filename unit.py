@@ -88,6 +88,7 @@ class Unit(Block):
             # if the task is done clear it out so we can be elidgable for another
             if self.task is not None and self.task.done:
                 self.task = None
+                self.work_target = None
                 self.dirty = 1
                 self.viewport.dirty = 1 # refresh screen to remove line
                 return
@@ -147,7 +148,7 @@ class Unit(Block):
                     if len(mapping) > 0:
                         closest = min(mapping, key=lambda x: x[0])[1]
                         if closest is not None:
-                            print("set stockpile")
+                            #print("set stockpile")
                             self.stock_pile = closest
                         return
                     else:
@@ -215,8 +216,10 @@ class Unit(Block):
     def do_task(self):
         # set work target
         if not isinstance(self.task, WanderingTask):
+            print(self.task.description, self.task.done)
             self.work_target = (self.task.target.x * config.image_size[0], self.task.target.y * config.image_size[1])
-        else: self.work_target = None
+        else:
+            self.work_target = None
 
         self.dirty = 1
         self.viewport.dirty = 1
@@ -227,8 +230,10 @@ class Unit(Block):
                 result = self.task.do()
                 if result is not None:
                     self.inventory.extend(result)
+                print(self.task.done)
             else:
                 self.task.postpone("{0} postponing task \"{1}\". Reason: Inventory full.".format(self.name, self.task.description))
+                self.work_target = None
                 self.task = None
 
         elif isinstance(self.task, PickUpLooseItemTask):
@@ -282,6 +287,7 @@ class Unit(Block):
 
         elif isinstance(self.task, WanderingTask):
             self.task = None
+            self.work_target = None
 
 
 
@@ -319,12 +325,16 @@ class Unit(Block):
 
     def draw_action(self, surf, force=False):
         if self.work_target is not None:
+            import sys
+            sys.stdout.flush()
             rects = pygame.draw.line(surf, pygame.Color("#FF0000"),
                     (self.x * config.image_size[0] + math.floor(config.image_size[0]/2),
                      self.y * config.image_size[1] + math.floor(config.image_size[0]/2)),
                     (self.work_target[0] + math.floor(config.image_size[0]/2),
                       self.work_target[1] + math.floor(config.image_size[0]/2)) , 4)
             self.work_target = None
+            self.dirty = 1
+            self.viewport.dirty = 1
 
 
     def mouse_collide(self, pos=None):
@@ -417,14 +427,6 @@ class Unit(Block):
 
             return surf.blit(self.image, (self.rect.x, self.rect.y))
 
-    def draw_action(self, surf, force=False):
-        if self.work_target is not None:
-            rects = pygame.draw.line(surf, pygame.Color("#FF0000"),
-                    (self.x * config.image_size[0] + math.floor(config.image_size[0]/2),
-                     self.y * config.image_size[1] + math.floor(config.image_size[0]/2)),
-                    (self.work_target[0] + math.floor(config.image_size[0]/2),
-                      self.work_target[1] + math.floor(config.image_size[0]/2)) , 4)
-            self.work_target = None
 
 
     def mouse_collide(self, pos=None):
