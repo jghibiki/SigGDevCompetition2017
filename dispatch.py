@@ -27,7 +27,7 @@ class Dispatcher:
         if keys[K_s]:
 
             # adds a new stockpile
-            for y in range(0, config.world_size[0]):
+            for y in range(0, config.world_size[0]): # need the target not to be directly under
                 for x in range(0, config.world_size[0]):
                     if self.viewport.map_layer[y][x].mouse_collide() and self.viewport.item_layer[y][x] == None:
                         sp = Stockpile(x, y, self.viewport)
@@ -133,7 +133,7 @@ class Dispatcher:
 
         random.shuffle(self.units)
         for unit in self.units:
-            if not unit.task:
+            if (not unit.task) or isinstance(unit.task, IdleTask):
                 if len(self.tasks) > 0:
                     mapping = [ [task.distance_to_target((unit.x, unit.y)), task] for task in self.tasks ]
 
@@ -144,10 +144,18 @@ class Dispatcher:
                     self.assigned_tasks.append(unit.task)
                     unit.update()
                 else:
-                    #if no tasks availiable make the unit wander
-                    task = WanderingTask(unit, self)
-                    unit.task = task
-                    unit.update()
+                    #if no tasks availiable make the unit wander or wait around
+                    if unit.task is None: # we might already be idling
+                        idle_task_type = random.randint(0, 1)
+                        task = None
+                        if idle_task_type is 0:
+                            task = WanderingTask(unit, self)
+                        elif idle_task_type is 1:
+                            task = IdlingTask(unit, self)
+                        unit.task = task
+                        unit.update()
+                    else:
+                        unit.update()
 
 
             elif unit.task:
@@ -297,14 +305,15 @@ class IdleTask(Task):
         Task.__init__(self, target, dispatcher, description)
 
     def do(self):
-        self.done = True
-        self.end_task()
-
         return self.target
 
     def postpone(self, reason):
         self.done = True
         self.end_task()
+
+    def end_task(self):
+        self.unit.task = None
+        Task.end_task(self)
 
 class WanderingTask(IdleTask):
     def __init__(self, unit, dispatcher):
@@ -332,6 +341,22 @@ class WanderingTask(IdleTask):
         target = GenericTarget(*xy)
         IdleTask.__init__(self, target, dispatcher, "Wandering.")
         self.priority = -99
+        self.unit = unit
+
+
+class IdlingTask(IdleTask):
+    def __init__(self, unit, dispatcher):
+        xy = GenericTarget(unit.x+1, unit.y) # need the target not to be directly under
+        IdleTask.__init__(self, xy, dispatcher,  "Idling.")
+        self.priority = -99
+
+        self.idle_turns = random.randint(3, 5)
+        self.unit = unit
+
+    def do(self):
+        self.idle_turns -= 1
+        if self.idle_turns <= 0:
+            self.end_task()
 
 
 

@@ -73,8 +73,8 @@ class Block(DirtySprite):
 
 
     def update(self, x=0, y=0):
-        self.rect.x += x
-        self.rect.y += y
+        self.rect.x = x
+        self.rect.y = y
 
 
     def draw(self, surf, force=False):

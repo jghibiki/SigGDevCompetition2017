@@ -165,12 +165,31 @@ class HoldableItemSource():
 
 class Container(Item):
 
-    def __init__(self, capacity, x, y, image, viewport):
+    def __init__(self, capacity, x, y, image, viewport, item_types=[]):
         Item.__init__(self, x, y, image, viewport, targetable=False)
 
         self.capacity = capacity
         self.items = []
+        self.item_types = item_types
 
+
+    def can_store_type(self, to_check):
+            return bool( sum([ int(isinstance(to_check, check_against))
+                for check_against in self.item_types ]) )
+
+    def get_item_types(self):
+        return self.item_types
+
+    def add_item_type(self, item_type):
+        if item_type not in self.item_types:
+            self.item_types.append(item_type)
+
+    def rm_item_type(self, item_type):
+        if item_type in self.item_types:
+            for _type in self.item_types:
+                if item_type == _type:
+                    self.item_types.remove(_type)
+                    return
 
     def can_store(self):
         return len(self.items) < self.capacity

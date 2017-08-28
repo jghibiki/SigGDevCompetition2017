@@ -14,8 +14,9 @@ from generator import *
 from utils import wrapline
 from enterprise import Enterprise
 
-if __name__ == "__main__":
 
+
+def main():
     pygame.init()
     clock = pygame.time.Clock()
 
@@ -71,7 +72,7 @@ if __name__ == "__main__":
 
 #generate units
     dispatcher = Dispatcher(vp)
-    vp.hud.dispatcher = dispatcher
+    vp.hud.register_state("dispatcher", dispatcher)
 #dispatcher.tasks.append( Task( GenericTarget( 20, 20) ) )
 #dispatcher.tasks.append( Task( GenericTarget( 0, 20) ) )
 #dispatcher.tasks.append( Task( GenericTarget( 20, 0) ) )
@@ -151,7 +152,7 @@ if __name__ == "__main__":
 
 
     enterprise = Enterprise()
-    vp.hud.enterprise = enterprise
+    vp.hud.register_state("enterprise", enterprise)
     vp.dirty = 1
     vp.update()
     vp.render()
@@ -232,3 +233,7 @@ if __name__ == "__main__":
                         cont = True
 
             clock.tick(120)
+
+
+if __name__ == "__main__":
+    main()
