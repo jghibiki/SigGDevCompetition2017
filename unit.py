@@ -227,9 +227,13 @@ class Unit(Block):
                     self.old_y = self.y
                     result = self.path_to((self.task.target.x, self.task.target.y))
                     if not result:
-                        self.task.postpone("{0} postponing task \"{1}\". Reason: Failed to find a clear path to task.".format(self.name, self.task.description))
-                        self.task = None
-                        self.path = None
+                        if self.turns_stuck < 2:
+                            self.turns_stuck += 1
+                        else:
+                            self.task.postpone("{0} postponing task \"{1}\". Reason: Failed to find a clear path to task.".format(self.name, self.task.description))
+                            self.task = None
+                            self.path = None
+                            self.turns_stuck = 0
 
     def do_task(self):
         # set work target
