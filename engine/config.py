@@ -1,5 +1,5 @@
 
-display_scale=0.75
+display_scale=0.95
 #display_scale=1.0
 
 world_size = (50, 50)

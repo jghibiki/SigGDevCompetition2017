@@ -5,14 +5,14 @@ import pygame.gfxdraw
 from pygame.locals import *
 from pygame.sprite import LayeredDirty
 
-import config
-from block import *
-from viewport import Viewport
-from unit import Unit
-from dispatch import Dispatcher, Task, GenericTarget
-from generator import *
-from utils import wrapline
-from enterprise import Enterprise
+from  engine import config
+from engine.block import *
+from engine.viewport import Viewport
+from engine.unit import Unit
+from engine.dispatch import Dispatcher, Task, GenericTarget
+from engine.generator import *
+from engine.utils import wrapline
+from engine.enterprise import Enterprise
 
 
 
@@ -146,16 +146,14 @@ def main():
 
     # render once quick before first loop
     window_surf.fill(pygame.Color("#000000"))
-    vp.update()
-    rects = vp.draw(window_surf)
-    pygame.display.update(rects)
-
 
     enterprise = Enterprise()
     vp.hud.register_state("enterprise", enterprise)
-    vp.dirty = 1
+
     vp.update()
     vp.render()
+    rects = vp.draw(window_surf)
+    pygame.display.update(rects)
 
     counter = 0
     paused = False

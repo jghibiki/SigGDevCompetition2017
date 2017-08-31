@@ -1,7 +1,7 @@
 import pygame
 
-import config
-from block import Block
+from engine import config
+from engine.block import Block
 
 class Collidable():
     pass

@@ -4,10 +4,10 @@ import math
 import pygame
 from pygame.locals import *
 
-import config
-from item_types import *
-from items import *
-from areas import *
+import engine.config
+from engine.item_types import *
+from engine.items import *
+from engine.areas import *
 
 class Dispatcher:
 

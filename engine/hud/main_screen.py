@@ -1,42 +1,14 @@
 import math
-import datetime
 from collections import Counter
 
 import pygame
 from pygame.sprite import DirtySprite
 
-import config
-from utils import wrapline
-from dispatch import *
-
-class Menu(DirtySprite):
-    def __init__(self, viewport, x, y, w, h):
-        DirtySprite.__init__(self)
-
-        self.viewport = viewport
-
-        self.rect = pygame.Rect(x, y, w, h)
-
-class ParentScreen:
-    def __init__(self, children=[]):
-        self.children = children
-
-    def add_child(self, child):
-        if child not in self.children: self.children.append(child)
-
-    def rm_child(self, child):
-        if child in self.children:
-            for c in self.children:
-                if c == child:
-                    self.children.remove(c)
-                    return
-
-    def state(self, name):
-        return self.parent.state(name)
-
-class ChildScreen:
-    def __init__(self, parent):
-        self.parent = parent
+from engine import config
+from engine.hud.menu import Menu
+from engine.hud.parent import ParentScreen
+from engine.hud.child import ChildScreen
+from engine.hud.components import *
 
 class MainHudScreen(Menu, ParentScreen, ChildScreen):
     def __init__(self, parent, x, y, w, h, viewport):
@@ -45,6 +17,7 @@ class MainHudScreen(Menu, ParentScreen, ChildScreen):
         ChildScreen.__init__(self, parent)
 
         self.rect = pygame.Rect(x, y, w, h)
+        self.surf = pygame.Surface((w, h), flags=pygame.SRCALPHA)
 
         self.font = pygame.font.Font("assets/bitwise/bitwise.ttf", 25)
         self.small_font = pygame.font.Font("assets/bitwise/bitwise.ttf", 15)
@@ -53,8 +26,30 @@ class MainHudScreen(Menu, ParentScreen, ChildScreen):
         self.parent.register_state("hovered_stock_pile", None)
         self.parent.register_state("hovered_building_placeholder", None)
 
-        self.dirty = 2
+        self.children = [
+            UnitStatusComponent(self, viewport),
+            PauseComponent(self, viewport)
+        ]
 
+        self.updates = []
+
+        self.dirty = 1
+
+    def update(self):
+        for child in self.children:
+            if child.update():
+                self.dirty = 1
+
+        if self.dirty:
+            return True
+        return False
+
+    def render(self):
+        if self.dirty == 1 or self.dirty == 2:
+            for child in self.children:
+                if child.dirty:
+                    child.render()
+                    self.updates.append(child.rect.inflate(1, 1))
 
 
     def draw(self, surf, force=False):
@@ -64,37 +59,22 @@ class MainHudScreen(Menu, ParentScreen, ChildScreen):
             units = self.viewport.unit_layer
 
             # clear hud
-            surf.fill(pygame.Color("#000000"))
+            for r in  self.updates:
+                self.surf.fill(pygame.Color(0,0,0,0), rect=r)
+            self.updates = []
 
-            pygame.draw.line(surf, pygame.Color("#00AD03"),
+            pygame.draw.line(self.surf, pygame.Color("#00AD03"),
                     (10, 35),
                     (config.window_size[0]-10, 35))
 
+            for child in self.children:
+                child.draw(self.surf, force)
 
-            fully_functioning_units = len(list(filter(lambda x: x.cooperation_rating >= 5, units)))
-            unit_count = self.font.render("Functioning Units: {0}".format(fully_functioning_units), True, pygame.Color("#00AD03"))
-            surf.blit(unit_count, (10, 45))
-
-            malfunctioning_units = len(list(filter(lambda x: 0 < x.cooperation_rating < 5, units)))
-            unit_count = self.font.render("Malfunctioning Units: {0}".format(malfunctioning_units), True, pygame.Color("#00AD03"))
-            surf.blit(unit_count, (10, 70))
-
-            rogue_units = len(list(filter(lambda x: x.cooperation_rating <= 0, units)))
-            unit_count = self.font.render("Rogue Units: {0}".format(rogue_units), True, pygame.Color("#00AD03"))
-            surf.blit(unit_count, (10, 95))
-
-            idle_units = len(list(filter(lambda x: x.task is None or isinstance(x.task, IdleTask), units)))
-            unit_count = self.font.render("Idle Units: {0}".format(idle_units), True, pygame.Color("#00AD03"))
-            surf.blit(unit_count, (10, 120))
-
-            num_tasks = len(self.parent.state("dispatcher").tasks)
-            num_tasks = self.font.render("Availiable Tasks: {0}".format(num_tasks), True, pygame.Color("#00AD03"))
-            surf.blit(num_tasks, (10, 145))
 
             # alert rendering
-            pygame.draw.line(surf, pygame.Color("#00AD03"), (300, 35), (300, config.hud_size - 5))
+            pygame.draw.line(self.surf, pygame.Color("#00AD03"), (300, 35), (300, config.hud_size - 5))
 
-            pygame.draw.line(surf, pygame.Color("#00AD03"), (675, 35), (675, config.hud_size - 5))
+            pygame.draw.line(self.surf, pygame.Color("#00AD03"), (675, 35), (675, config.hud_size - 5))
 
             unit_count = self.font.render("Alerts: ", True, pygame.Color("#00AD03"))
             surf.blit(unit_count, (305, 35))
@@ -231,16 +211,6 @@ class MainHudScreen(Menu, ParentScreen, ChildScreen):
                         y_offset += 1
 
 
-            if self.parent.state("enterprise") is not None and self.parent.state("enterprise").paused:
-                paused_color = pygame.Color("#00AD03")
-
-            else:
-                paused_color = pygame.Color("#001700")
-
-            paused = self.font.render("*Paused*", True, paused_color)
-            surf.blit(paused, (
-                math.floor(config.window_size[0]/2) - math.floor(paused.get_rect().w/2),
-                5))
 
             pygame.draw.line(surf, pygame.Color("#00AD03"),
                     (math.floor(config.window_size[0]/2) - 75, 5),
@@ -250,45 +220,4 @@ class MainHudScreen(Menu, ParentScreen, ChildScreen):
                 (math.floor(config.window_size[0]/2) + 75, 5),
                 (math.floor(config.window_size[0]/2) + 75, 35))
 
-class Hud(DirtySprite, ):
-
-    def __init__(self, x, y, w, h, viewport):
-        DirtySprite.__init__(self)
-
-        self.hud_state = {}
-        self.children = [ MainHudScreen(self, x, y, w, h, viewport) ]
-
-        self.alerts = []
-        self.dirty = 2
-
-
-    def register_state(self, name, value):
-        if name not in self.hud_state:
-            self.hud_state[name] = value
-
-    def state(self, name):
-        if name in self.hud_state:
-            return self.hud_state[name]
-        return None
-
-    def set_state(self, name, value):
-        self.hud_state[name] = value
-
-    def draw(self, surf, force=False):
-        if self.dirty == 1 or self.dirty ==2  or force:
-            if self.dirty == 1: self.dirty = 0
-
-            for c in self.children:
-                c.draw(surf, force)
-
-
-    def add_alert(self, msg):
-        if len(self.alerts) == 4: # remove alert before adding another
-            to_remove = min(self.alerts, key=lambda x: x["expiration"])
-            self.alerts.remove(to_remove)
-
-        self.alerts.append({
-            "expiration": datetime.datetime.now() + datetime.timedelta(seconds=5),
-            "message": msg})
-
-
+        surf.blit(self.surf, (0, 0))

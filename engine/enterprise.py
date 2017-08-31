@@ -1,7 +1,7 @@
 import datetime
 import math
 
-import config
+from engine import config
 
 class Enterprise:
 

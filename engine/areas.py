@@ -2,7 +2,7 @@ import math
 
 import pygame
 
-import config
+from engine import config
 
 class Area:
     def __init__(self, coordinates, name, color):

@@ -3,11 +3,11 @@ import math
 import pygame
 from pygame.locals import *
 
-import config
-from hud import Hud
-from block import *
-from items import *
-from areas import *
+import engine.config
+from engine.hud import Hud
+from engine.block import *
+from engine.items import *
+from engine.areas import *
 
 
 class Viewport():
@@ -17,7 +17,9 @@ class Viewport():
 
         self.v_rect = pygame.Rect(0, 0, virtual_width, virtual_height-config.hud_size)
         self.map_rect = pygame.Rect(0, 0, map_width, map_height)
-        self.hud_rect = pygame.Rect(0, virtual_height-config.hud_size, virtual_width, config.hud_size)
+
+        self.hud_rect = pygame.Rect(0, 0, virtual_width, virtual_height-config.hud_size)
+        self.hud_height = virtual_height - config.hud_size
 
         self.map_layer = []
         self.map_layer_surf= pygame.Surface((self.map_rect.w, self.map_rect.h))
@@ -35,8 +37,8 @@ class Viewport():
 
         self.unit_action_surf = pygame.Surface((self.map_rect.w, self.map_rect.h), flags=pygame.SRCALPHA)
 
-        self.hud = Hud(0, virtual_height-config.hud_size, virtual_width, config.hud_size, self)
-        self.hud_surf = pygame.Surface((self.hud_rect.w, self.hud_rect.h))
+        self.hud = Hud(0, 0, virtual_width, config.hud_size, self)
+        self.hud_surf = pygame.Surface((virtual_width, config.hud_size))
         self.hud_surf.fill(pygame.Color("#737373"))
         self.hud_font = pygame.font.Font("assets/bitwise/bitwise.ttf", 25)
 
@@ -143,11 +145,17 @@ class Viewport():
 
         self.mouse_events = []
 
+
+    def render(self):
+        self.hud.render()
+
     def update(self):
         for area in self.area_layer:
             area.update()
 
-    def render(self):
+        self.hud.update()
+
+    def draw(self, surf, forced=False):
         if self.dirty == 1 or self.dirty == 2:
             if self.dirty == 1:
                 self.dirty = 0
@@ -183,9 +191,6 @@ class Viewport():
             self.hud.draw(self.hud_surf)
 
 
-
-
-    def draw(self, surf):
         rects = [ ]
 
         # draw map layer
@@ -204,7 +209,7 @@ class Viewport():
         rects.append( surf.blit(self.unit_action_surf, (0, 0),  area=self.v_rect) )
 
         # draw hud layer
-        rects.append( surf.blit(self.hud_surf, (self.hud_rect.x, self.hud_rect.y)) )
+        rects.append( surf.blit(self.hud_surf, (0, self.hud_height), area=self.hud_rect) )
 
 
         return rects

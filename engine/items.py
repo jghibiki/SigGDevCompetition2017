@@ -1,7 +1,7 @@
 import pygame
 
-import config
-from item_types import *
+from engine import config
+from engine.item_types import *
 
 class Coal(HoldableItem):
     name = "Coal"

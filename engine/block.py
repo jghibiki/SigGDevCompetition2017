@@ -3,11 +3,11 @@ import math
 from pygame.sprite import DirtySprite
 import pygame
 
-import config
+from engine import config
 
 
 def init_block_images():
-    from items import (
+    from engine.items import (
         Grass,
         CopperOreDeposit,
         IronOreDeposit,

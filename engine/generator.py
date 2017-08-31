@@ -1,6 +1,6 @@
 import random
 
-from items import *
+from engine.items import *
 
 def generate_items_layer(vp):
     # generate item layer
