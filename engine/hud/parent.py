@@ -16,3 +16,5 @@ class ParentScreen:
     def state(self, name):
         return self.parent.state(name)
 
+    def register_state(self, name, value):
+        self.parent.register_state(name, value)

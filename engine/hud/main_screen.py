@@ -22,13 +22,11 @@ class MainHudScreen(Menu, ParentScreen, ChildScreen):
         self.font = pygame.font.Font("assets/bitwise/bitwise.ttf", 25)
         self.small_font = pygame.font.Font("assets/bitwise/bitwise.ttf", 15)
 
-        self.parent.register_state("hovered_unit", None)
-        self.parent.register_state("hovered_stock_pile", None)
-        self.parent.register_state("hovered_building_placeholder", None)
 
         self.children = [
             UnitStatusComponent(self, viewport),
-            PauseComponent(self, viewport)
+            PauseComponent(self, viewport),
+            AlertComponent(self, viewport)
         ]
 
         self.updates = []
@@ -76,22 +74,6 @@ class MainHudScreen(Menu, ParentScreen, ChildScreen):
 
             pygame.draw.line(self.surf, pygame.Color("#00AD03"), (675, 35), (675, config.hud_size - 5))
 
-            unit_count = self.font.render("Alerts: ", True, pygame.Color("#00AD03"))
-            surf.blit(unit_count, (305, 35))
-
-            if len(self.parent.alerts) > 0:
-                y_offset = 1
-                now = datetime.datetime.now()
-
-                for alert in self.parent.alerts:
-                    if alert["expiration"] > now:
-                        text = wrapline("<" + alert["message"] + ">", self.small_font, 700)
-                        for line in text:
-                            rendered_text = self.small_font.render(line, True, pygame.Color("#00AD03"))
-                            surf.blit(rendered_text, (305, 45 + y_offset * 15))
-                            y_offset += 1
-                    else:
-                        self.parent.alerts.remove(alert)
 
 
             # render unit info on hover
@@ -221,3 +203,4 @@ class MainHudScreen(Menu, ParentScreen, ChildScreen):
                 (math.floor(config.window_size[0]/2) + 75, 35))
 
         surf.blit(self.surf, (0, 0))
+

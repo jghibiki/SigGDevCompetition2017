@@ -22,9 +22,10 @@ class Hud(DirtySprite):
         self.surf = pygame.Surface((w, h), flags=pygame.SRCALPHA)
         self.surf.fill(pygame.Color("#000000"))
 
+        self.register_state("alerts", [])
+
         self.updates = []
 
-        self.alerts = []
         self.dirty = 1
 
 
@@ -66,10 +67,10 @@ class Hud(DirtySprite):
 
 
     def add_alert(self, msg):
-        if len(self.alerts) == 4: # remove alert before adding another
-            to_remove = min(self.alerts, key=lambda x: x["expiration"])
-            self.alerts.remove(to_remove)
+        if len(self.state("alerts")) == 4: # remove alert before adding another
+            to_remove = min(self.state("alerts"), key=lambda x: x["expiration"])
+            self.state("alerts").remove(to_remove)
 
-        self.alerts.append({
+        self.state("alerts").append({
             "expiration": datetime.datetime.now() + datetime.timedelta(seconds=5),
             "message": msg})

@@ -20,6 +20,10 @@ class UnitStatusComponent(ScreenComponent):
 
         self.updates = []
 
+        self.screen.register_state("hovered_unit", None)
+        self.screen.register_state("hovered_stock_pile", None)
+        self.screen.register_state("hovered_building_placeholder", None)
+
         self.fully_functioning_units = 0
         self.malfunctioning_units = 0
         self.rogue_units = 0
